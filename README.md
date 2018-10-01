@@ -15,15 +15,16 @@
       $return = { TRUE }
     }
 # JsonLint Semantic Check Example??
-    
-    "xxx" = %int  # integer type
-    "yyy" = 3  # yyy = 3
+    {
+        "xxx" = %int  # integer type
+        "yyy" = 3  # yyy = 3
 
-    "x" = { 
-      "a"%can_empty_ut = { 
-         %order_on %multiple_on
-         %can_empty_ut%int%event_semantic_chk_event_name = { %order_on  %multiple_on %int } 
-      }  
+        "x" = { 
+          "a"%can_empty_ut = { 
+             %order_on %multiple_on
+             %can_empty_ut%int%event_semantic_chk_event_name = { %order_on  %multiple_on %int } 
+          }  
+        }
     }
     
  # Test Json File ??
