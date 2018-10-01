@@ -446,6 +446,10 @@ namespace Lint {
 
 			if (schemaUT->IsItemList(i)) {
 				if (schemaUT->GetItemList(itCount).ToString() == "%multiple_on") {
+					if (order == Option::Order_::OFF) {
+						std::cout << "to do %multple_on, need to %order_on!" << ENTER;
+						return false;
+					}
 					multiple_flag = 1;
 					validVisit[itCount] = true;
 					itCount++;
