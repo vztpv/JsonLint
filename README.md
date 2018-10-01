@@ -1,4 +1,5 @@
-# JsonLint - No Support For UTF-8, Unicodes..., // only for ANSI !
+# JsonLint - No Support For UTF-8, Unicodes..., 
+# // only for ANSI !
     Using ClauText API, like ClauLint (only semantic? validator?)
     No Grammar Check! ??
     Supoort Parallel Parsing.
