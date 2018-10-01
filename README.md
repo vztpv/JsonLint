@@ -21,7 +21,7 @@
     "x" = { 
       "a"%can_empty_ut = { 
          %order_on %multiple_on
-         %can_empty_ut%int%semantic_chk_event_name = { %order_on  %multiple_on %int } 
+         %can_empty_ut%int%event_semantic_chk_event_name = { %order_on  %multiple_on %int } 
       }  
     }
     
