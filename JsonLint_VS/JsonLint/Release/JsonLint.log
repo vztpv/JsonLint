@@ -2352,8 +2352,6 @@ c:\users\vztpv\downloads\jsonlint-master\jsonlint-master\include\wiz\load_data_u
 c:\users\vztpv\downloads\jsonlint-master\jsonlint-master\include\wiz\load_data_utility.h(1971): warning C4018: '<': signed/unsigned mismatch
 c:\users\vztpv\downloads\jsonlint-master\jsonlint-master\include\wiz\load_data_utility.h(1976): warning C4018: '<': signed/unsigned mismatch
   Generating code
-  4721 of 4728 functions (99.9%) were compiled, the rest were copied from previous compilation.
-    10 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  All 4728 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   JsonLint.vcxproj -> C:\Users\vztpv\Downloads\JsonLint-master\JsonLint-master\JsonLint_VS\Release\JsonLint.exe
