@@ -411,11 +411,11 @@ namespace Lint {
 	std::set<std::tuple<std::string, std::string, std::string>> check_total_id;
 
 	bool Check(wiz::load_data::UserType* schema_eventUT, wiz::load_data::UserType* schemaUT,
-		const wiz::load_data::UserType* jsontextUT, int depth)
+		const wiz::load_data::UserType* jsontextUT, int depth, bool& log_on)
 	{
 		Option::Order_ order = Option::Order_::OFF;
-		long long ct_itCount = 0; // for jsontextUT?
-		long long ct_utCount = 0; // for jsontextUT?
+		long long jt_itCount = 0; // for jsontextUT?
+		long long jt_utCount = 0; // for jsontextUT?
 		long long itCount = 0;
 		long long utCount = 0;
 
@@ -429,6 +429,7 @@ namespace Lint {
 
 		std::set<std::pair<std::string, std::string>> check_id;
 		std::set<std::pair<std::string, std::string>> check_justone;
+
 
 		if (schemaUT->GetItemListSize() > 0 && schemaUT->GetItemList(itCount).ToString() == "%order_on") {
 			order = Option::Order_::ON;
@@ -447,8 +448,8 @@ namespace Lint {
 				check_total_id.clear();
 			}
 
-			const bool chk_ct_it = ct_itCount < jsontextUT->GetItemListSize();
-			const bool chk_ct_ut = ct_utCount < jsontextUT->GetUserTypeListSize();
+			const bool chk_ct_it = jt_itCount < jsontextUT->GetItemListSize();
+			const bool chk_ct_ut = jt_utCount < jsontextUT->GetUserTypeListSize();
 
 			if (schemaUT->IsItemList(i)) {
 				if (schemaUT->GetItemList(itCount).ToString() == "%multiple_on") {
@@ -457,9 +458,29 @@ namespace Lint {
 						return false;
 					}
 					multiple_flag = 1;
-					validVisit[itCount] = true;
+					validVisit[i] = true;
 					itCount++;
 					continue;
+				}
+				else if (schemaUT->GetItemList(itCount).ToString() == "%log_on") {
+					log_on = true; 
+					validVisit[i] = true;
+					itCount++;
+					continue;
+				}
+				else if (schemaUT->GetItemList(itCount).ToString() == "%log_off") {
+					log_on = false;
+					validVisit[i] = true;
+					itCount++;
+					continue;
+				}
+
+				// log
+				if (log_on) {
+					std::cout << "<itemtype> ";
+					std::cout << "[depth] : " << depth << " ";
+					std::cout << "[~th] : " << itCount << " ";
+					std::cout << "[schema] : " << schemaUT->GetItemList(itCount).ToString() << " ";
 				}
 
 				// off -> no order? : slow??
@@ -468,6 +489,11 @@ namespace Lint {
 					std::tuple<bool, Option, Option> temp;
 					// schemaUT?
 					for (long long j = 0; j < jsontextUT->GetItemListSize(); ++j) {
+						if (log_on) {
+							std::cout << ENTER << "\t" << "[json ~th] : " << j << " "
+								<< "[jsontext] : " << jsontextUT->GetItemList(j).ToString() << ENTER;
+						}
+
 						temp = _Check(schema_eventUT, schemaUT->GetItemList(itCount), jsontextUT->GetItemList(j), wiz::load_data::LoadData::GetRealDir(jsontextUT->GetItemList(j).GetName().ToString(), jsontextUT, &builder));
 						if (mark[j] == false &&
 							std::get<0>(temp)
@@ -567,7 +593,7 @@ namespace Lint {
 						Option var_option = OptionFrom(schemaUT->GetItemList(itCount).GetName().ToString());
 
 						if (var_option.required == Option::Required_::OPTIONAL_) {
-							ct_itCount--;
+							jt_itCount--;
 							validVisit[i] = true;
 						}
 						else {
@@ -580,15 +606,21 @@ namespace Lint {
 					if (!chk_ct_it) {
 						break;
 					}
+
+					if (log_on) {
+						std::cout << "[json ~th] : " << jt_itCount << " "
+							<< "[jsontext] : " << jsontextUT->GetItemList(jt_itCount).ToString() << ENTER;
+					}
+
 					std::tuple<bool, Option, Option> temp;
-					temp = _Check(schema_eventUT, schemaUT->GetItemList(itCount), jsontextUT->GetItemList(ct_itCount), wiz::load_data::LoadData::GetRealDir(jsontextUT->GetItemList(ct_itCount).GetName().ToString(), jsontextUT, &builder));
+					temp = _Check(schema_eventUT, schemaUT->GetItemList(itCount), jsontextUT->GetItemList(jt_itCount), wiz::load_data::LoadData::GetRealDir(jsontextUT->GetItemList(jt_itCount).GetName().ToString(), jsontextUT, &builder));
 
 					if (std::get<0>(temp)) {
 						validVisit[i] = true;
 
 						// check id, total id!
 						if (std::get<1>(temp).id == Option::Id_::ID) {
-							const std::string key_1 = jsontextUT->GetItemList(ct_itCount).GetName().ToString();
+							const std::string key_1 = jsontextUT->GetItemList(jt_itCount).GetName().ToString();
 							const std::string key_2 = "it_name";
 							const std::pair<std::string, std::string> key(key_1, key_2);
 
@@ -606,7 +638,7 @@ namespace Lint {
 								return false;
 							}
 
-							const std::string key_1 = jsontextUT->GetItemList(ct_itCount).GetName().ToString();
+							const std::string key_1 = jsontextUT->GetItemList(jt_itCount).GetName().ToString();
 							const std::string key_2 = wiz::load_data::LoadData::GetRealDir(schemaUT->GetName().ToString(), schemaUT, &builder);
 							const std::string key_3 = "it_name";
 
@@ -621,7 +653,7 @@ namespace Lint {
 							}
 						}
 						if (std::get<2>(temp).id == Option::Id_::ID) {
-							const std::string key_1 = jsontextUT->GetItemList(ct_itCount).Get(0).ToString();
+							const std::string key_1 = jsontextUT->GetItemList(jt_itCount).Get(0).ToString();
 							const std::string key_2 = "it_value";
 							const std::pair<std::string, std::string> key(key_1, key_2);
 
@@ -639,7 +671,7 @@ namespace Lint {
 								return false;
 							}
 
-							const std::string key_1 = jsontextUT->GetItemList(ct_itCount).Get(0).ToString();
+							const std::string key_1 = jsontextUT->GetItemList(jt_itCount).Get(0).ToString();
 							const std::string key_2 = wiz::load_data::LoadData::GetRealDir(schemaUT->GetName().ToString(), schemaUT, &builder);
 							const std::string key_3 = "it_value";
 
@@ -656,15 +688,15 @@ namespace Lint {
 
 						// check justone, (onemore)
 						if (std::get<1>(temp).onemore == Option::OneMore_::JUSTONE) { // justone -> only for name! , not for value!
-							if (check_justone.find(std::make_pair(jsontextUT->GetItemList(ct_itCount).GetName().ToString(), std::string("it"))) != check_justone.end()) {
+							if (check_justone.find(std::make_pair(jsontextUT->GetItemList(jt_itCount).GetName().ToString(), std::string("it"))) != check_justone.end()) {
 								std::cout << "jsonText is not valid, justone is set, but not justone. 2" << ENTER;
 								return false;
 							}
 						}
 						else if (std::get<1>(temp).onemore == Option::OneMore_::ONEMORE) {
-							if (ct_itCount < jsontextUT->GetItemListSize() - 1
+							if (jt_itCount < jsontextUT->GetItemListSize() - 1
 								&& itCount < schemaUT->GetItemListSize()
-								&& jsontextUT->GetItemList(ct_itCount).GetName() == jsontextUT->GetItemList(ct_itCount + 1).GetName()
+								&& jsontextUT->GetItemList(jt_itCount).GetName() == jsontextUT->GetItemList(jt_itCount + 1).GetName()
 								) {
 								if (1 != multiple_flag) {
 									--i; itCount--;
@@ -676,7 +708,7 @@ namespace Lint {
 						}
 					}
 					else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-						ct_itCount--;
+						jt_itCount--;
 						validVisit[i] = true;
 					}
 					else {
@@ -689,10 +721,18 @@ namespace Lint {
 						itCount--; i--;
 					}
 				}
-				ct_itCount++;
+				jt_itCount++;
 				itCount++;
 			}
 			else { // usertype
+				// log
+				if (log_on && chk_ct_ut) {
+					std::cout << ENTER << "<usertype> ";
+					std::cout << "[depth] : " << depth << " ";
+					std::cout << "[~th] : " << utCount << " ";
+					std::cout << "[schema] : " << schemaUT->GetUserTypeList(utCount)->GetName().ToString() << " ";
+				}
+
 				// off -> no order? : slow??
 				if (order == Option::Order_::OFF) {
 					bool pass = false;
@@ -700,15 +740,20 @@ namespace Lint {
 					std::tuple<bool, Option> temp;
 
 					for (long long j = 0; j < jsontextUT->GetUserTypeListSize(); ++j) {
+						if (log_on) {
+							std::cout << ENTER << "\t" << "[json ~th] : " << j << " "
+								<< "[jsontext] : " << jsontextUT->GetUserTypeList(j)->GetName().ToString() << ENTER;
+						}
+
 						if (mark2[j] == false && std::get<0>(temp = _Check(schema_eventUT, schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(j), wiz::load_data::LoadData::GetRealDir(jsontextUT->GetUserTypeList(j)->GetName().ToString(), jsontextUT->GetUserTypeList(j), &builder)))) {
 							if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(j)->GetIListSize()) {
 								//
 							}
-							else if (Check(schema_eventUT, schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(j), depth + 1)) {
+							else if (Check(schema_eventUT, schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(j), depth + 1, log_on)) {
 								//
 							}
 							else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-								ct_utCount--;
+								jt_utCount--;
 								validVisit[i] = true;
 							}
 							else {
@@ -767,7 +812,7 @@ namespace Lint {
 								break;
 							}
 							else if (std::get<1>(temp).onemore == Option::OneMore_::ONEMORE) {
-								ct_utCount++;
+								jt_utCount++;
 								use_onemore = true;
 							}
 							else {
@@ -779,7 +824,7 @@ namespace Lint {
 						Option var_option = OptionFrom(schemaUT->GetUserTypeList(utCount)->GetName().ToString());
 
 						if (var_option.required == Option::Required_::OPTIONAL_) {
-							ct_utCount--;
+							jt_utCount--;
 
 							validVisit[i] = true;
 						}
@@ -790,7 +835,7 @@ namespace Lint {
 					}
 
 					if (use_onemore) {
-						ct_utCount--;
+						jt_utCount--;
 					}
 				}
 				else if (order == Option::Order_::ON) {
@@ -798,22 +843,27 @@ namespace Lint {
 					{
 						break;
 					}
+					
+					if (log_on) {
+						std::cout << "[json ~th] : " << jt_utCount << " "
+							<< "[jsontext] : " << jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString() << ENTER;
+					}
 
 					std::tuple<bool, Option> temp = _Check(schema_eventUT,
-						schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(ct_utCount),
-						wiz::load_data::LoadData::GetRealDir(jsontextUT->GetUserTypeList(ct_utCount)->GetName().ToString(), jsontextUT->GetUserTypeList(ct_utCount), &builder)
+						schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(jt_utCount),
+						wiz::load_data::LoadData::GetRealDir(jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString(), jsontextUT->GetUserTypeList(jt_utCount), &builder)
 					);
 
 					if (std::get<0>(temp)) {
-						if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(ct_utCount)->GetIListSize()) {
+						if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(jt_utCount)->GetIListSize()) {
 							//
 						}
-						else if (Check(schema_eventUT, schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(ct_utCount), depth + 1)) {
+						else if (Check(schema_eventUT, schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(jt_utCount), depth + 1, log_on)) {
 							validVisit[i] = true;
 
 							// check id, total id!
 							if (std::get<1>(temp).id == Option::Id_::ID) {
-								const std::string key_1 = jsontextUT->GetUserTypeList(ct_utCount)->GetName().ToString();
+								const std::string key_1 = jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString();
 								const std::string key_2 = "ut_name";
 								const std::pair<std::string, std::string> key(key_1, key_2);
 
@@ -831,7 +881,7 @@ namespace Lint {
 									return false;
 								}
 
-								const std::string key_1 = jsontextUT->GetUserTypeList(ct_utCount)->GetName().ToString();
+								const std::string key_1 = jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString();
 								const std::string key_2 = wiz::load_data::LoadData::GetRealDir(schemaUT->GetName().ToString(), schemaUT, &builder);
 								const std::string key_3 = "ut_name";
 
@@ -848,15 +898,15 @@ namespace Lint {
 
 							// check justone, (onemore)
 							if (std::get<1>(temp).onemore == Option::OneMore_::JUSTONE) { // justone -> only for name! , not for value!
-								if (check_justone.find(std::make_pair(jsontextUT->GetUserTypeList(ct_utCount)->GetName().ToString(), std::string("ut"))) != check_justone.end()) {
+								if (check_justone.find(std::make_pair(jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString(), std::string("ut"))) != check_justone.end()) {
 									std::cout << "jsonText is not valid, justone is set, but not justone. 4" << ENTER;
 									return false;
 								}
 							}
 							else if (std::get<1>(temp).onemore == Option::OneMore_::ONEMORE) {
-								if (ct_utCount < jsontextUT->GetUserTypeListSize() - 1
+								if (jt_utCount < jsontextUT->GetUserTypeListSize() - 1
 									&& utCount < schemaUT->GetUserTypeListSize()
-									&& jsontextUT->GetUserTypeList(ct_utCount)->GetName() == jsontextUT->GetUserTypeList(ct_utCount + 1)->GetName()
+									&& jsontextUT->GetUserTypeList(jt_utCount)->GetName() == jsontextUT->GetUserTypeList(jt_utCount + 1)->GetName()
 									) {
 									if (1 != multiple_flag) {
 										--i; utCount--;
@@ -868,7 +918,7 @@ namespace Lint {
 							}
 						}
 						else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-							ct_utCount--;
+							jt_utCount--;
 							validVisit[i] = true;
 						}
 						else {
@@ -877,7 +927,7 @@ namespace Lint {
 						}
 					}
 					else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-						ct_utCount--;
+						jt_utCount--;
 						validVisit[i] = true;
 					}
 					else {
@@ -890,7 +940,7 @@ namespace Lint {
 					}
 				}
 
-				ct_utCount++;
+				jt_utCount++;
 				utCount++;
 			}
 		}
@@ -905,12 +955,12 @@ namespace Lint {
 			return false;
 		}
 
-		if (ct_itCount != jsontextUT->GetItemListSize()) {
+		if (jt_itCount != jsontextUT->GetItemListSize()) {
 			std::cout << "jsonText is not valid13" << ENTER;
 			return false;
 		}
-		if (ct_utCount != jsontextUT->GetUserTypeListSize()) {
-			std::cout << "jsonText is not valid14 : " << ct_utCount << ENTER;
+		if (jt_utCount != jsontextUT->GetUserTypeListSize()) {
+			std::cout << "jsonText is not valid14 : " << jt_utCount << ENTER;
 			return false;
 		}
 
@@ -985,8 +1035,10 @@ namespace Lint {
 		}
 
 		jsontextUT = wiz::load_data::UserType::Find(&schema_eventUT, start_name, &builder).second[0];
-		//
-		const bool chk = Check(&schema_eventUT, &schemaUT, jsontextUT, 0);
+		
+		// for log?
+		bool log_on = false;
+		const bool chk = Check(&schema_eventUT, &schemaUT, jsontextUT, 0, log_on);
 
 		//// debug
 		//std::cout << schema_eventUT.ToString() << ENTER
@@ -1082,10 +1134,10 @@ int main(int argc, char* argv[])
 	if (option == "-V") {
 		auto chk = Lint::Validate(schema);
 		if (chk) {
-			std::cout << "success" << ENTER;;
+			std::cout << ENTER <<  "success" << ENTER;
 		}
 		else {
-			std::cout << "fail" << ENTER;;
+			std::cout << ENTER << "fail" << ENTER;
 		}
 	}
 	else if (option == "-M") {
