@@ -477,7 +477,7 @@ namespace Lint {
 
 				// log
 				if (log_on) {
-					std::cout << "<itemtype> ";
+					std::cout << ENTER << "<itemtype> ";
 					std::cout << "[depth] : " << depth << " ";
 					std::cout << "[~th] : " << itCount << " ";
 					std::cout << "[schema] : " << schemaUT->GetItemList(itCount).ToString() << " ";
@@ -578,6 +578,9 @@ namespace Lint {
 									std::cout << "jsonText is not valid, justone is set, but not justone. 1" << ENTER;
 									return false;
 								}
+								else {
+									check_justone.insert(std::make_pair(jsontextUT->GetItemList(j).GetName().ToString(), std::string("it")));
+								}
 								break;
 							}
 							else if (std::get<1>(temp).onemore == Option::OneMore_::ONEMORE) {
@@ -592,7 +595,7 @@ namespace Lint {
 					if (false == pass) {
 						Option var_option = OptionFrom(schemaUT->GetItemList(itCount).GetName().ToString());
 
-						if (var_option.required == Option::Required_::OPTIONAL_) {
+						if (var_option.required == Option::Required_::OPTIONAL_) { // optional -> only for name
 							jt_itCount--;
 							validVisit[i] = true;
 						}
@@ -691,6 +694,9 @@ namespace Lint {
 							if (check_justone.find(std::make_pair(jsontextUT->GetItemList(jt_itCount).GetName().ToString(), std::string("it"))) != check_justone.end()) {
 								std::cout << "jsonText is not valid, justone is set, but not justone. 2" << ENTER;
 								return false;
+							}
+							else {
+								check_justone.insert(std::make_pair(jsontextUT->GetItemList(jt_itCount).GetName().ToString(), std::string("it")));
 							}
 						}
 						else if (std::get<1>(temp).onemore == Option::OneMore_::ONEMORE) {
@@ -809,6 +815,9 @@ namespace Lint {
 									std::cout << "jsonText is not valid, justone is set, but not justone. 3" << ENTER;
 									return false;
 								}
+								else {
+									check_justone.insert(std::make_pair(jsontextUT->GetUserTypeList(j)->GetName().ToString(), std::string("ut")));
+								}
 								break;
 							}
 							else if (std::get<1>(temp).onemore == Option::OneMore_::ONEMORE) {
@@ -901,6 +910,9 @@ namespace Lint {
 								if (check_justone.find(std::make_pair(jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString(), std::string("ut"))) != check_justone.end()) {
 									std::cout << "jsonText is not valid, justone is set, but not justone. 4" << ENTER;
 									return false;
+								}
+								else {
+									check_justone.insert(std::make_pair(jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString(), std::string("ut")));
 								}
 							}
 							else if (std::get<1>(temp).onemore == Option::OneMore_::ONEMORE) {
