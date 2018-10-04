@@ -1,7 +1,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/56ori3o7534vs89f?svg=true)](https://ci.appveyor.com/project/vztpv/jsonlint)
 
 # JsonLint - No Support For UTF-8, Unicodes..., 
-# // only for ANSI !
+# // only for ANSI !, check test folder.
     Using ClauText API, like ClauLint (only semantic? validator?)
     No Grammar Check! ??
     Supoort Parallel Parsing.
