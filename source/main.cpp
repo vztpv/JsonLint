@@ -300,6 +300,8 @@ namespace Lint {
 					" name = " + y.GetName().ToString() + " value = " + y.Get(0).ToString() +
 					" is_usertype = FALSE " +
 					" real_dir = " + real_dir +
+					" select = NAME " +
+					" input = " + y.GetName().ToString() +
 					" } }",
 					"TRUE", wiz::ExcuteData(), &builder);
 
@@ -321,6 +323,8 @@ namespace Lint {
 					" name = " + y.GetName().ToString() + " value = " + y.Get(0).ToString() +
 					" is_usertype = FALSE " +
 					" real_dir = " + real_dir +
+					" select = VALUE " +
+					" input = " + y.Get(0).ToString() +
 					" } }",
 					"TRUE", wiz::ExcuteData(), &builder);
 
@@ -380,6 +384,8 @@ namespace Lint {
 					" name = " + y->GetName().ToString() +
 					" is_usertype = TRUE " +
 					" real_dir = " + real_dir +
+					" select = NAME " +
+					" input = " + y->GetName().ToString() +
 					"}  } ",
 					"TRUE", wiz::ExcuteData(), &builder);
 
