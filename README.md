@@ -101,7 +101,7 @@
         "yyy" = 3
         "x" = {
             "z" = { %order_on %multiple_on %int%total_id }
-            %string%can_empty_ut%optional = { %order_on %multiple_on 		
+            %string%can_empty_ut%optional = {
                 %string%can_empty_ut%event_int_string%event_list_sum_larger_than_10
                     = {
                         %order_on %multiple_on %int%total_id 
