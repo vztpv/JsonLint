@@ -17,7 +17,7 @@
     $Event = {
         id = __init__  # special event.
 
-        $load_json2 = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\json_test2.txt" } # here, change!
+        $load_json2 = { { "a.json" } # here, change!
         { test2 }  }
         $print = { data = { "init end.." } }
         $print = { enter = { \n } }
@@ -110,7 +110,7 @@
         }
     }
     
- # Test Json File ??
+ # Test Json File ?? ( "a.json" )
     {
         "xxx" : 333,
         "yyy" : 3,
