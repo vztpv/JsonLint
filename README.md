@@ -7,7 +7,8 @@
     Supoort Parallel Parsing.
     Can Check More specific Semantic validation??
     (using clautext code?, ex) integer -> even? or odd? )
-    
+# jsonLint.exe -V test_file_name
+
 # ClauText Code
     $Event = { # line comment.
       id = semantic_chk_event_name
