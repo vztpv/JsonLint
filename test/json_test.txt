@@ -45,7 +45,7 @@ $Event = {
 			$assign = { $local.sum { $add = { $local.sum 
 			$get = { $concat_all = {
 				$parameter.real_dir / $ it  $local.i }
-			} } } } # todo
+			} } } } 
 			$assign = { $local.i { $add = { $local.i 1 } } }
 		}
 	}
@@ -65,7 +65,7 @@ $Event = {
 
 $Event = { 
 	id = larger_than_300
-	$parameter = { name value is_usertype real_dir } 
+	$parameter = { name value is_usertype real_dir select } # select : NAME or VALUE ? 
 	$if = { 
 		cond = {
 			$COMP> = {
@@ -82,14 +82,14 @@ $Event = {
 }
 $Event = {
 	id = int_string
-	$parameter = { name value 
+	$parameter = { name value input
 					is_usertype real_dir } 
 	$if = { 
 		cond = {
 			$EQ = { 
 				INTEGER $get_type = { 		  
 					$remove_quoted = { 
-					$parameter.name }
+					$parameter.input }
 				}
 			}
 		}
@@ -104,11 +104,12 @@ $Event = {
 	"xxx"%optional = %int%event_larger_than_300
 	"yyy" = 3
 	"x" = {
-		%string%can_empty_ut%one_more%optional = { %order_on %multiple_on 		
-		%string%can_empty_ut%event_int_string%event_list_sum_larger_than_10
-			= { %order_on %multiple_on %int%total_id }
-		}  
+		"z" = { %order_on %multiple_on %int%total_id }
+		%string%can_empty_ut%optional = { %order_on %multiple_on 		
+			%string%can_empty_ut%event_int_string%event_list_sum_larger_than_10
+				= { 
+					%order_on %multiple_on %int%total_id 
+			}
+		}
 	}
 }
-# chk - case : %multiple_on and 
-		# %multiple_off several times?
