@@ -22,7 +22,7 @@ $test2 = {
 $Event = {
 	id = __init__  # special event.
 	
-	$load_json2 = { { "a.json" } # here, change!
+	$load_json2 = { { "a.json" } # here, change!, todo - chk /./ 
 	{ test2 }  }
 	$print = { data = { "init end.." } }
 	$print = { enter = { \n } }
@@ -100,15 +100,32 @@ $Event = {
 	$return = { FALSE }
 }
 
+%log_on # default : %log_off
 {
+	# default : %order_off
+	%order_on
 	"xxx"%optional = %int%event_larger_than_300
 	"yyy" = 3
+	%order_off
+	
 	"x" = {
-		"z" = { %order_on %multiple_on %int%total_id }
-		%string%can_empty_ut%optional = { %order_on %multiple_on 		
-			%string%can_empty_ut%event_int_string%event_list_sum_larger_than_10
-				= { 
-					%order_on %multiple_on %int%total_id 
+		# %order_off -> default multiple!
+		"z" = { 
+			%order_on # %order_on -> just_one!
+			
+			%multiple_on
+			"a"%optional = 3
+			%multiple_off
+			
+			%order_off
+			
+			%int%id 
+		}
+		%string
+			= {
+			%string%event_int_string%event_list_sum_larger_than_10
+				= {
+				%int%total_id 
 			}
 		}
 	}
