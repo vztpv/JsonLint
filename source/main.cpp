@@ -431,7 +431,7 @@ namespace Lint {
 
 		int multiple_run = 0; // 1 - it(itemtype) run, 2 - ut(usertype) run.
 
-		for (long long i = itCount; i < schemaUT->GetIListSize(); ++i)
+		for (long long i = 0; i < schemaUT->GetIListSize(); ++i)
 		{
 			if (depth == 0) { // chk - json`s depth >= 1 ( { ~~ } )
 				check_total_id.clear();
@@ -443,13 +443,13 @@ namespace Lint {
 			if (schemaUT->IsItemList(i)) {
 				if (schemaUT->GetItemListSize() > 0 && schemaUT->GetItemList(itCount).ToString() == "%order_on") {
 					order = Option::Order_::ON;
-					validVisit[itCount] = true;
+					validVisit[i] = true;
 					itCount++;
 					continue;
 				}
 				else if (schemaUT->GetItemList(itCount).ToString() == "%order_off") {
 					order = Option::Order_::OFF;
-					validVisit[itCount] = true;
+					validVisit[i] = true;
 					itCount++;
 					continue;
 				}
@@ -489,7 +489,7 @@ namespace Lint {
 				
 
 				// log
-				if (log_on && (order == Option::Order_::OFF || chk_ct_it)) {
+				if (log_on && (order == Option::Order_::OFF)) {
 					std::cout << ENTER << "<itemtype> ";
 					std::cout << "[depth] : " << depth << " ";
 					std::cout << "[~th] : " << itCount << " ";
@@ -626,7 +626,9 @@ namespace Lint {
 				}
 				else if (order == Option::Order_::ON) {
 					if (!chk_ct_it) {
-						break;
+						std::cout << "chk_ct_it is false" << ENTER;
+						itCount++;
+						continue;
 					}
 
 					if (log_on) {
@@ -754,7 +756,7 @@ namespace Lint {
 			}
 			else { // usertype
 				// log
-				if (log_on && (order == Option::Order_::OFF || chk_ct_ut)) {
+				if (log_on && (order == Option::Order_::OFF)) {
 					std::cout << ENTER << "<usertype> ";
 					std::cout << "[depth] : " << depth << " ";
 					std::cout << "[~th] : " << utCount << " ";
@@ -877,7 +879,9 @@ namespace Lint {
 				else if (order == Option::Order_::ON) {
 					if (!chk_ct_ut)
 					{
-						break;
+						std::cout << "chk_ct_ut is false" << ENTER;
+						utCount++;
+						continue;
 					}
 					
 					if (log_on) {
@@ -967,15 +971,15 @@ namespace Lint {
 						jt_utCount--;
 						validVisit[i] = true;
 						
-						if (1 == multiple_flag && itCount < schemaUT->GetItemListSize() - 1 &&
-							schemaUT->GetItemList(itCount + 1).ToString() == "%multiple_off") {
+						if (1 == multiple_flag && 
+							schemaUT->GetItemList(itCount).ToString() == "%multiple_off") {
 							multiple_flag = 0;
 							multiple_run = 0;
 							//jt_utCount--;
 						}
 					}
-					else if (1 == multiple_flag && itCount < schemaUT->GetItemListSize() - 1 &&
-						schemaUT->GetItemList(itCount + 1).ToString() == "%multiple_off") {
+					else if (1 == multiple_flag && 
+						schemaUT->GetItemList(itCount).ToString() == "%multiple_off") {
 						multiple_flag = 0;
 						multiple_run = 0;
 						jt_utCount--;
@@ -996,13 +1000,14 @@ namespace Lint {
 			}
 		}
 
-		if (multiple_flag && jsontextUT->GetUserTypeListSize() > 0 && jsontextUT->GetItemListSize() == 0) {
+		if (multiple_flag && 2 == multiple_run) {
 			utCount++;
 		}
-		else if (multiple_flag && jsontextUT->GetItemListSize() > 0 && jsontextUT->GetUserTypeListSize() == 0) {
+		else if (multiple_flag && 1 == multiple_run) {
 			itCount++;
 		}
 		else if (multiple_flag) {
+			std::cout << "multiple_flag is wrong.. " << ENTER;
 			return false;
 		}
 
