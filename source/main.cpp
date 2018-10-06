@@ -413,6 +413,9 @@ namespace Lint {
 	bool Check(wiz::load_data::UserType* schema_eventUT, wiz::load_data::UserType* schemaUT,
 		const wiz::load_data::UserType* jsontextUT, int depth, bool& log_on)
 	{
+		bool use_it_order_on = false;
+		bool use_ut_order_on = false;
+
 		Option::Order_ order = Option::Order_::OFF;
 		long long jt_itCount = 0; // for jsontextUT?
 		long long jt_utCount = 0; // for jsontextUT?
@@ -431,12 +434,14 @@ namespace Lint {
 
 		int multiple_run = 0; // 1 - it(itemtype) run, 2 - ut(usertype) run.
 
+		long long count_jt_it = 0;
+		long long count_jt_ut = 0;
+
 		for (long long i = 0; i < schemaUT->GetIListSize(); ++i)
 		{
 			if (depth == 0) { // chk - json`s depth >= 1 ( { ~~ } )
 				check_total_id.clear();
 			}
-
 			const bool chk_ct_it = jt_itCount < jsontextUT->GetItemListSize();
 			const bool chk_ct_ut = jt_utCount < jsontextUT->GetUserTypeListSize();
 
@@ -445,10 +450,24 @@ namespace Lint {
 					order = Option::Order_::ON;
 					validVisit[i] = true;
 					itCount++;
+
+					if (use_it_order_on) {
+						jt_itCount += count_jt_it;
+						count_jt_it = 0;
+					}
+					if (use_ut_order_on) {
+						jt_utCount += count_jt_ut;
+						count_jt_ut = 0;
+					}
+
+					use_it_order_on = false;
+					use_ut_order_on = false;
+
 					continue;
 				}
 				else if (schemaUT->GetItemList(itCount).ToString() == "%order_off") {
 					order = Option::Order_::OFF;
+					
 					validVisit[i] = true;
 					itCount++;
 					continue;
@@ -489,7 +508,7 @@ namespace Lint {
 				
 
 				// log
-				if (log_on && (order == Option::Order_::OFF)) {
+				if (log_on) {
 					std::cout << ENTER << "<itemtype> ";
 					std::cout << "[depth] : " << depth << " ";
 					std::cout << "[~th] : " << itCount << " ";
@@ -503,6 +522,7 @@ namespace Lint {
 					std::tuple<bool, Option, Option> temp;
 
 					int check_justone = 0;
+					
 
 					// schemaUT?
 					for (long long j = 0; j < jsontextUT->GetItemListSize(); ++j) {
@@ -598,10 +618,13 @@ namespace Lint {
 								}
 								else {
 									check_justone++;
+									count_jt_it++;
+									use_it_order_on = true;
 								}
 							}
 							else {
-								jt_itCount++;
+								use_it_order_on = true;
+								count_jt_it++; //jt_itCount++;
 								use_onemore = true;
 							}
 						}
@@ -611,17 +634,12 @@ namespace Lint {
 						Option var_option = OptionFrom(schemaUT->GetItemList(itCount).GetName().ToString());
 
 						if (var_option.required == Option::Required_::OPTIONAL_) { // optional -> only for name
-							jt_itCount--;
 							validVisit[i] = true;
 						}
 						else {
 							std::cout << "jsonText is not valid4" << ENTER;
 							return false;
 						}
-					}
-
-					if (use_onemore) {
-						jt_itCount--;
 					}
 				}
 				else if (order == Option::Order_::ON) {
@@ -684,7 +702,11 @@ namespace Lint {
 								return false;
 							}
 						}
-						if (std::get<2>(temp).id == Option::Id_::ID) {
+
+						if (mark[jt_itCount]) {
+							jt_itCount++;
+						}
+						else if (std::get<2>(temp).id == Option::Id_::ID) {
 							const std::string key_1 = jsontextUT->GetItemList(jt_itCount).Get(0).ToString();
 							const std::string key_2 = "it_value";
 							const std::pair<std::string, std::string> key(key_1, key_2);
@@ -738,14 +760,12 @@ namespace Lint {
 							schemaUT->GetItemList(itCount + 1).ToString() == "%multiple_off") {
 							multiple_flag = 0;
 							multiple_run = 0;
-							//jt_itCount--;
 						}
 					}
 					else if (1 == multiple_flag && itCount < schemaUT->GetItemListSize() -1 &&
 						schemaUT->GetItemList(itCount+1).ToString() == "%multiple_off") {
 						multiple_flag = 0;
 						multiple_run = 0;
-						jt_itCount--;
 					}
 					else {
 						std::cout << "jsonText is not valid6" << ENTER;
@@ -757,12 +777,15 @@ namespace Lint {
 						itCount--; i--;
 					}
 				}
-				jt_itCount++;
+				
+				if (Option::Order_::ON == order) {
+					jt_itCount++;
+				}
 				itCount++;
 			}
 			else { // usertype
 				// log
-				if (log_on && (order == Option::Order_::OFF)) {
+				if (log_on) {
 					std::cout << ENTER << "<usertype> ";
 					std::cout << "[depth] : " << depth << " ";
 					std::cout << "[~th] : " << utCount << " ";
@@ -794,7 +817,7 @@ namespace Lint {
 								//
 							}
 							else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-								jt_utCount--;
+							//	jt_utCount--;
 								validVisit[i] = true;
 							}
 							else {
@@ -856,10 +879,13 @@ namespace Lint {
 								}
 								else {
 									check_justone++;
+									use_ut_order_on = true;
+									count_jt_ut++; //jt_utCount++;
 								}
 							}
 							else {
-								jt_utCount++;
+								use_ut_order_on = true;
+								count_jt_ut++; //jt_utCount++;
 								use_onemore = true;
 							}
 						}
@@ -868,7 +894,7 @@ namespace Lint {
 						Option var_option = OptionFrom(schemaUT->GetUserTypeList(utCount)->GetName().ToString());
 
 						if (var_option.required == Option::Required_::OPTIONAL_) {
-							jt_utCount--;
+							//jt_utCount--;
 
 							validVisit[i] = true;
 						}
@@ -877,17 +903,12 @@ namespace Lint {
 							return false;
 						}
 					}
-
-					if (use_onemore) {
-						jt_utCount--;
-					}
 				}
 				else if (order == Option::Order_::ON) {
 					if (!chk_ct_ut)
 					{
 						std::cout << "chk_ct_ut is false" << ENTER;	
 
-					
 						if (2 == multiple_run) {
 							utCount++;
 							continue;
@@ -915,7 +936,10 @@ namespace Lint {
 							std::cout << " { " << ENTER;
 						}
 
-						if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(jt_utCount)->GetIListSize()) {
+						if (mark2[utCount]) {
+							jt_utCount++;
+						}
+						else if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(jt_utCount)->GetIListSize()) {
 							//
 						}
 						else if (Check(schema_eventUT, schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(jt_utCount), depth + 1, log_on)) {
@@ -1007,10 +1031,18 @@ namespace Lint {
 						utCount--; i--;
 					}
 				}
-
-				jt_utCount++;
+				if (Option::Order_::ON == order) {
+					jt_utCount++;
+				}
 				utCount++;
 			}
+		}
+
+		if (use_it_order_on) {
+			jt_itCount += count_jt_it;
+		}
+		if (use_ut_order_on) {
+			jt_utCount += count_jt_ut;
 		}
 
 		if (multiple_flag && 2 == multiple_run) {
@@ -1025,7 +1057,7 @@ namespace Lint {
 		}
 
 		if (jt_itCount != jsontextUT->GetItemListSize()) {
-			std::cout << "jsonText is not valid13" << ENTER;
+			std::cout << "jsonText is not valid13 : " << jt_itCount << " " << jsontextUT->GetItemListSize() << ENTER;
 			return false;
 		}
 		if (jt_utCount != jsontextUT->GetUserTypeListSize()) {
