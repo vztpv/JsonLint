@@ -26,15 +26,16 @@ $Event = {
 	"x" = {
 		# %order_off -> default multiple!
 		"z" = { 
+			
 			%order_on # %order_on -> just_one!
 			
 			%multiple_on
-			%quoted_string%event_int_string = 3
+			%quoted_string%event_int_string = { 3 }
 			%multiple_off
 			
 			%order_off
-			
-			"c" = %int #%int%id 
+			"c" = { %int } #%int%id 
+			"d" = { %int }
 		}
 		%string = {
 			%string%event_int_string%event_list_sum_larger_than_10
