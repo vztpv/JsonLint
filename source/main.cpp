@@ -445,6 +445,8 @@ namespace Lint {
 			const bool chk_ct_it = jt_itCount < jsontextUT->GetItemListSize();
 			const bool chk_ct_ut = jt_utCount < jsontextUT->GetUserTypeListSize();
 
+			bool check_pass = false;
+
 			if (schemaUT->IsItemList(i)) {
 				if (schemaUT->GetItemListSize() > 0 && schemaUT->GetItemList(itCount).ToString() == "%order_on") {
 					order = Option::Order_::ON;
@@ -467,7 +469,14 @@ namespace Lint {
 				}
 				else if (schemaUT->GetItemList(itCount).ToString() == "%order_off") {
 					order = Option::Order_::OFF;
+
+					count_jt_it = 0;
+					count_jt_ut = 0;
 					
+
+					use_it_order_on = false;
+					use_ut_order_on = false;
+
 					validVisit[i] = true;
 					itCount++;
 					continue;
@@ -515,6 +524,8 @@ namespace Lint {
 					std::cout << "[schema] : " << schemaUT->GetItemList(itCount).ToString() << " ";
 				}
 
+				
+
 				// off -> no order? : slow??
 				if (order == Option::Order_::OFF) {
 					bool pass = false;
@@ -523,7 +534,6 @@ namespace Lint {
 
 					int check_justone = 0;
 					
-
 					// schemaUT?
 					for (long long j = 0; j < jsontextUT->GetItemListSize(); ++j) {
 						if (log_on) {
@@ -660,6 +670,8 @@ namespace Lint {
 							<< "[jsontext] : " << jsontextUT->GetItemList(jt_itCount).ToString() << ENTER;
 					}
 					
+					check_pass = true;
+
 					int check_justone = 0;
 
 					std::tuple<bool, Option, Option> temp;
@@ -704,7 +716,7 @@ namespace Lint {
 						}
 
 						if (mark[jt_itCount]) {
-							jt_itCount++;
+							//
 						}
 						else if (std::get<2>(temp).id == Option::Id_::ID) {
 							const std::string key_1 = jsontextUT->GetItemList(jt_itCount).Get(0).ToString();
@@ -753,7 +765,7 @@ namespace Lint {
 						}
 					}
 					else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-						jt_itCount--;
+						check_pass = false;
 						validVisit[i] = true;
 
 						if (1 == multiple_flag && itCount < schemaUT->GetItemListSize() - 1 &&
@@ -766,6 +778,7 @@ namespace Lint {
 						schemaUT->GetItemList(itCount+1).ToString() == "%multiple_off") {
 						multiple_flag = 0;
 						multiple_run = 0;
+						check_pass = false;
 					}
 					else {
 						std::cout << "jsonText is not valid6" << ENTER;
@@ -778,7 +791,7 @@ namespace Lint {
 					}
 				}
 				
-				if (Option::Order_::ON == order) {
+				if (Option::Order_::ON == order && check_pass) {
 					jt_itCount++;
 				}
 				itCount++;
@@ -923,6 +936,7 @@ namespace Lint {
 							<< "[jsontext] : " << jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString() << ENTER;
 					}
 
+					check_pass = true;
 					int check_justone = 0;
 
 
@@ -936,8 +950,8 @@ namespace Lint {
 							std::cout << " { " << ENTER;
 						}
 
-						if (mark2[utCount]) {
-							jt_utCount++;
+						if (mark2[jt_utCount]) {
+							//
 						}
 						else if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(jt_utCount)->GetIListSize()) {
 							//
@@ -993,7 +1007,7 @@ namespace Lint {
 							}
 						}
 						else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-							jt_utCount--;
+							check_pass = false;
 							validVisit[i] = true;
 						}
 						else {
@@ -1005,7 +1019,7 @@ namespace Lint {
 						}
 					}
 					else if (std::get<1>(temp).required == Option::Required_::OPTIONAL_) {
-						jt_utCount--;
+						check_pass = false;
 						validVisit[i] = true;
 						
 						if (1 == multiple_flag && 
@@ -1019,7 +1033,7 @@ namespace Lint {
 						schemaUT->GetItemList(itCount).ToString() == "%multiple_off") {
 						multiple_flag = 0;
 						multiple_run = 0;
-						jt_utCount--;
+						check_pass = false;
 					}
 					else {
 						std::cout << "jsonText is not valid12" << ENTER;
@@ -1031,19 +1045,21 @@ namespace Lint {
 						utCount--; i--;
 					}
 				}
-				if (Option::Order_::ON == order) {
+				if (Option::Order_::ON == order && check_pass) {
 					jt_utCount++;
 				}
 				utCount++;
 			}
 		}
 
-		if (use_it_order_on) {
+		
+		if (use_it_order_on) { // order_off?
 			jt_itCount += count_jt_it;
 		}
 		if (use_ut_order_on) {
 			jt_utCount += count_jt_ut;
 		}
+		
 
 		if (multiple_flag && 2 == multiple_run) {
 			//utCount++;
