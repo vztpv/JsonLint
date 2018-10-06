@@ -627,7 +627,13 @@ namespace Lint {
 				else if (order == Option::Order_::ON) {
 					if (!chk_ct_it) {
 						std::cout << "chk_ct_it is false" << ENTER;
-						continue;
+						itCount++;
+						if (1 == multiple_run) {	
+							continue;
+						}
+						else {
+							break;
+						}
 					}
 
 					if (log_on) {
@@ -878,8 +884,15 @@ namespace Lint {
 				else if (order == Option::Order_::ON) {
 					if (!chk_ct_ut)
 					{
-						std::cout << "chk_ct_ut is false" << ENTER;
-						continue;
+						std::cout << "chk_ct_ut is false" << ENTER;	
+
+						utCount++;
+						if (2 == multiple_run) {
+							continue;
+						}
+						else {
+							break;
+						}
 					}
 					
 					if (log_on) {
@@ -972,7 +985,7 @@ namespace Lint {
 						if (1 == multiple_flag && 
 							schemaUT->GetItemList(itCount).ToString() == "%multiple_off") {
 							multiple_flag = 0;
-							multiple_run = 0;
+							multiple_run = 0; 
 							//jt_utCount--;
 						}
 					}
@@ -999,10 +1012,10 @@ namespace Lint {
 		}
 
 		if (multiple_flag && 2 == multiple_run) {
-			utCount++;
+			//utCount++;
 		}
 		else if (multiple_flag && 1 == multiple_run) {
-			itCount++;
+			//itCount++;
 		}
 		else if (multiple_flag) {
 			std::cout << "multiple_flag is wrong.. " << ENTER;
@@ -1019,11 +1032,11 @@ namespace Lint {
 		}
 
 		if (itCount != schemaUT->GetItemListSize()) {
-			std::cout << "jsonText is not valid15 : " << ENTER;
+			std::cout << "jsonText is not valid15 : " << itCount << ENTER;
 			return false;
 		}
 		if (utCount != schemaUT->GetUserTypeListSize()) {
-			std::cout << "jsonText is not valid16 : " << ENTER;
+			std::cout << "jsonText is not valid16 : " << utCount << ENTER;
 			return false;
 		}
 
