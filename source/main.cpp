@@ -627,8 +627,9 @@ namespace Lint {
 				else if (order == Option::Order_::ON) {
 					if (!chk_ct_it) {
 						std::cout << "chk_ct_it is false" << ENTER;
-						itCount++;
+						
 						if (1 == multiple_run) {	
+							itCount++;
 							continue;
 						}
 						else {
@@ -886,8 +887,9 @@ namespace Lint {
 					{
 						std::cout << "chk_ct_ut is false" << ENTER;	
 
-						utCount++;
+					
 						if (2 == multiple_run) {
+							utCount++;
 							continue;
 						}
 						else {
