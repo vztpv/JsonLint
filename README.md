@@ -9,7 +9,7 @@
     (using clautext code?, ex) integer -> even? or odd? )
 # JsonLint.exe -V test_file_name
 
-# JsonLint Semantic Check code Example??
+# JsonLint Semantic Check code Example
     $test2 = {
 
     }
@@ -110,7 +110,7 @@
         }
     }
     
- # Test Json File ?? ( "a.json" )
+ # Test Json File ( "a.json" )
     {
         "xxx" : 333,
         "yyy" : 3,
