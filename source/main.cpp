@@ -678,7 +678,8 @@ namespace Lint {
 					temp = _Check(schema_eventUT, schemaUT->GetItemList(itCount), jsontextUT->GetItemList(jt_itCount), wiz::load_data::LoadData::GetRealDir(jsontextUT->GetItemList(jt_itCount).GetName().ToString(), jsontextUT, &builder));
 
 					if (mark[jt_itCount]) {
-						//
+						std::cout << "mark " << ENTER;
+						return false;
 					}
 					else if (std::get<0>(temp)) {
 						validVisit[i] = true;
@@ -946,7 +947,8 @@ namespace Lint {
 					);
 
 					if (mark2[jt_utCount]) {
-						//
+						std::cout << "mark2" << ENTER;
+						return false;
 					}
 					else if (std::get<0>(temp)) {
 						if (log_on) {
