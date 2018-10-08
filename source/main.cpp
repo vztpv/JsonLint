@@ -715,10 +715,7 @@ namespace Lint {
 							}
 						}
 
-						if (mark[jt_itCount]) {
-							//
-						}
-						else if (std::get<2>(temp).id == Option::Id_::ID) {
+						if (std::get<2>(temp).id == Option::Id_::ID) {
 							const std::string key_1 = jsontextUT->GetItemList(jt_itCount).Get(0).ToString();
 							const std::string key_2 = "it_value";
 							const std::pair<std::string, std::string> key(key_1, key_2);
