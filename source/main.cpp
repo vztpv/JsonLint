@@ -677,7 +677,10 @@ namespace Lint {
 					std::tuple<bool, Option, Option> temp;
 					temp = _Check(schema_eventUT, schemaUT->GetItemList(itCount), jsontextUT->GetItemList(jt_itCount), wiz::load_data::LoadData::GetRealDir(jsontextUT->GetItemList(jt_itCount).GetName().ToString(), jsontextUT, &builder));
 
-					if (std::get<0>(temp)) {
+					if (mark[jt_itCount]) {
+						//
+					}
+					else if (std::get<0>(temp)) {
 						validVisit[i] = true;
 
 						// check id, total id!
@@ -942,7 +945,10 @@ namespace Lint {
 						wiz::load_data::LoadData::GetRealDir(jsontextUT->GetUserTypeList(jt_utCount)->GetName().ToString(), jsontextUT->GetUserTypeList(jt_utCount), &builder)
 					);
 
-					if (std::get<0>(temp)) {
+					if (mark2[jt_utCount]) {
+						//
+					}
+					else if (std::get<0>(temp)) {
 						if (log_on) {
 							std::cout << " { " << ENTER;
 						}
