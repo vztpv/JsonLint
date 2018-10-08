@@ -947,10 +947,8 @@ namespace Lint {
 							std::cout << " { " << ENTER;
 						}
 
-						if (mark2[jt_utCount]) {
-							//
-						}
-						else if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(jt_utCount)->GetIListSize()) {
+						
+						if (std::get<1>(temp).empty_ut == Option::EmptyUT_::ON && 0 == jsontextUT->GetUserTypeList(jt_utCount)->GetIListSize()) {
 							//
 						}
 						else if (Check(schema_eventUT, schemaUT->GetUserTypeList(utCount), jsontextUT->GetUserTypeList(jt_utCount), depth + 1, log_on)) {
