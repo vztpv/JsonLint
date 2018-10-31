@@ -928,8 +928,7 @@ namespace Lint {
 							continue;
 						}
 						else {
-							break;
-						}
+							break;						}
 					}
 					
 					if (log_on) {
@@ -1159,6 +1158,12 @@ namespace Lint {
 		// for log?
 		bool log_on = false;
 		const bool chk = Check(&schema_eventUT, &schemaUT, jsontextUT, 0, log_on);
+
+		{
+			wiz::ClauText jsonText;
+			
+			jsonText.excute_module("Main = { $call = { id = __end__ } }", &schema_eventUT, wiz::ExcuteData(), opt, 1); // 0 (remove events) -> 1 (revoke events?)
+		}
 
 		//// debug
 		//std::cout << schema_eventUT.ToString() << ENTER
