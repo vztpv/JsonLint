@@ -23,7 +23,12 @@
         $print = { enter = { \n } }
         $return = { test2 } # returns data folder?
     }
-
+    
+    $Event = {
+        id = __end__
+        
+        # nothing.
+    }
 
     $Event = { 
         id = list_sum_larger_than_10
