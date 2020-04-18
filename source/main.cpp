@@ -2,7 +2,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <vld.h>
+//#include <vld.h>
 
 #include <iostream>
 #include <fstream>
