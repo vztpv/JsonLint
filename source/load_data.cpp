@@ -12,10 +12,12 @@
 #include "wiz/STRINGBUILDER.H"
 #include "wiz/load_data.h"
 
+using namespace std::literals;
+
 namespace wiz {
-	namespace load_data{
+	namespace load_data {
 		bool LoadData::operation(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const WIZ_STRING_TYPE& str,
-			wiz::ArrayStack<WIZ_STRING_TYPE>& operandStack, const ExcuteData& excuteData, wiz::StringBuilder* builder)
+			wiz::ArrayStack<WIZ_STRING_TYPE>& operandStack, const ExecuteData& excuteData)
 		{
 			if (!operandStack.empty() && operandStack.top() == "ERROR") {
 				return false;
@@ -25,10 +27,10 @@ namespace wiz {
 			int count = 0; // for brace!
 			{
 				for (int i = operandStack.size() - 1; i >= 0; --i) {
-					if ("{" == operandStack[i]) {
+					if ("{"sv == operandStack[i]) {
 						count++;
 					}
-					if ("}" == operandStack[i]) {
+					if ("}"sv == operandStack[i]) {
 						count--;
 						if (count < 0) {
 							break;
@@ -49,33 +51,33 @@ namespace wiz {
 				}
 			}
 
-			if ("$EQ" == str) {
+			if ("$EQ"sv == str) {
 				WIZ_STRING_TYPE x, y;
 				int idx = -1;
 				x = operandStack.pop();
 				y = operandStack.pop();
 
-				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString(), builder) == "== 0") {
+				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString()) == "== 0") {
 					operandStack.push("TRUE");
 				}
 				else {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$NOTEQ" == str)
+			else if ("$NOTEQ"sv == str)
 			{
 				WIZ_STRING_TYPE x, y;
 				x = operandStack.pop();
 				y = operandStack.pop();
 
-				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString(), builder) != "== 0") {
+				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString()) != "== 0") {
 					operandStack.push("TRUE");
 				}
 				else {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$AND" == str)
+			else if ("$AND"sv == str)
 			{
 				WIZ_STRING_TYPE x, y;
 				x = operandStack.pop();
@@ -88,7 +90,7 @@ namespace wiz {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$AND_ALL" == str) {
+			else if ("$AND_ALL"sv == str) {
 				std::vector<WIZ_STRING_TYPE> store(operandNum);
 				for (int i = 0; i < operandNum; ++i) {
 					store[i] = operandStack.pop();
@@ -101,7 +103,7 @@ namespace wiz {
 				}
 				operandStack.push("TRUE");
 			}
-			else if ("$OR" == str)
+			else if ("$OR"sv == str)
 			{
 				WIZ_STRING_TYPE x, y;
 				x = operandStack.pop();
@@ -114,7 +116,7 @@ namespace wiz {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$OR_ALL" == str)
+			else if ("$OR_ALL"sv == str)
 			{
 				std::vector<WIZ_STRING_TYPE> store;
 
@@ -129,7 +131,7 @@ namespace wiz {
 				}
 				operandStack.push("FALSE");
 			}
-			else if ("$NOT" == str)
+			else if ("$NOT"sv == str)
 			{
 				WIZ_STRING_TYPE x;
 				x = operandStack.pop();
@@ -141,13 +143,13 @@ namespace wiz {
 					operandStack.push("TRUE");
 				}
 			}
-			else if ("$COMP<" == str)
+			else if ("$COMP<"sv == str)
 			{
 				WIZ_STRING_TYPE x, y;
 				x = operandStack.pop();
 				y = operandStack.pop();
 
-				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString(), builder) == "< 0") {
+				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString()) == "< 0") {
 					operandStack.push("TRUE");
 				}
 				else
@@ -155,13 +157,13 @@ namespace wiz {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$COMP>" == str)
+			else if ("$COMP>"sv == str)
 			{
 				WIZ_STRING_TYPE x, y;
 				x = operandStack.pop();
 				y = operandStack.pop();
 
-				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString(), builder) == "> 0") {
+				if (wiz::load_data::Utility::Compare(x.ToString(), y.ToString()) == "> 0") {
 					operandStack.push("TRUE");
 				}
 				else
@@ -169,13 +171,13 @@ namespace wiz {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$COMP<EQ" == str)
+			else if ("$COMP<EQ"sv == str)
 			{
 				std::string x, y;
 				x = operandStack.pop().ToString();
 				y = operandStack.pop().ToString();
 
-				if (wiz::load_data::Utility::Compare(x, y, builder) == "< 0" || wiz::load_data::Utility::Compare(x, y, builder) == "== 0") {
+				if (wiz::load_data::Utility::Compare(x, y) == "< 0" || wiz::load_data::Utility::Compare(x, y) == "== 0") {
 					operandStack.push("TRUE");
 				}
 				else
@@ -183,13 +185,13 @@ namespace wiz {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$COMP>EQ" == str)
+			else if ("$COMP>EQ"sv == str)
 			{
 				std::string x, y;
 				x = operandStack.pop().ToString();
 				y = operandStack.pop().ToString();
 
-				if (wiz::load_data::Utility::Compare(x, y, builder) == "> 0" || wiz::load_data::Utility::Compare(x, y, builder) == "== 0") {
+				if (wiz::load_data::Utility::Compare(x, y) == "> 0" || wiz::load_data::Utility::Compare(x, y) == "== 0") {
 					operandStack.push("TRUE");
 				}
 				else
@@ -197,7 +199,7 @@ namespace wiz {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$add" == str) // todo! = int operator double => double operator double!
+			else if ("$add"sv == str) // todo! = int operator double => double operator double!
 			{
 				auto x = operandStack.pop();
 				auto y = operandStack.pop();
@@ -217,7 +219,7 @@ namespace wiz {
 					operandStack.push("ERROR");
 				}
 			}
-			else if ("$multiple" == str) // todo! = int operator double => double operator double!
+			else if ("$multiple"sv == str) // todo! = int operator double => double operator double!
 			{
 				std::string _x, _y;
 				auto x = operandStack.pop();
@@ -242,7 +244,7 @@ namespace wiz {
 					operandStack.push("ERROR");
 				}
 			}
-			else if ("$divide" == str) // todo! = int operator double => double operator double!
+			else if ("$divide"sv == str) // todo! = int operator double => double operator double!
 			{
 				std::string _x, _y;
 				auto x = operandStack.pop();
@@ -268,7 +270,7 @@ namespace wiz {
 				}
 
 			}
-			else if ("$modular" == str)
+			else if ("$modular"sv == str)
 			{
 				WIZ_STRING_TYPE x, y;
 				x = operandStack.pop();
@@ -286,7 +288,7 @@ namespace wiz {
 					operandStack.push("ERROR");
 				}
 			}
-			else if ("$rand" == str)
+			else if ("$rand"sv == str)
 			{
 				std::string x, y;
 				x = operandStack.pop().ToString();
@@ -309,22 +311,9 @@ namespace wiz {
 					operandStack.push("ERROR");
 				}
 			}
-			else if ("$concat" == str)
+			else if ("$concat"sv == str)
 			{
-				if (builder) {
-					builder->Clear();
-
-					int total_size = 0;
-					for (int i = 0; i < 2; ++i)
-					{
-						total_size += operandStack.top().ToString().size();
-						std::string temp = operandStack.pop().ToString();
-						builder->Append(temp.c_str(), temp.size()); // chk
-					}
-
-					operandStack.push(std::string(builder->Str(), total_size));
-				}
-				else {
+				{
 					std::string x, y;
 					x = operandStack.pop().ToString();
 					y = operandStack.pop().ToString();
@@ -332,7 +321,7 @@ namespace wiz {
 					operandStack.push(x + y);
 				}
 			}
-			else if ("$concat2" == str) /// with space
+			else if ("$concat2"sv == str) /// with space
 			{
 				std::string x, y;
 				x = operandStack.pop().ToString();
@@ -340,23 +329,9 @@ namespace wiz {
 
 				operandStack.push(x + " " + y);
 			}
-			else if ("$concat_all" == str)
+			else if ("$concat_all"sv == str)
 			{
-				//cout << "----" << endl;
-				if (builder) {
-					builder->Clear();
-
-					int total_size = 0;
-					for (int i = 0; i < operandNum; ++i)
-					{
-						total_size += operandStack.top().ToString().size();
-						std::string temp = operandStack.pop().ToString();
-						builder->Append(temp.c_str(), temp.size()); // chk
-					}
-
-					operandStack.push(std::string(builder->Str(), total_size));
-				}
-				else {
+				{
 					std::string result;
 
 					for (int i = 0; i < operandNum; ++i) {
@@ -367,7 +342,7 @@ namespace wiz {
 					operandStack.push(result);
 				}
 			}
-			else if ("$concat_all2" == str)
+			else if ("$concat_all2"sv == str)
 			{
 				WIZ_STRING_TYPE result;
 
@@ -379,7 +354,7 @@ namespace wiz {
 				}
 				operandStack.push(result);
 			}
-			else if ("$concat3" == str) { // for special case? "abc" "def" "ghi" -> "abc def ghi"
+			else if ("$concat3"sv == str) { // for special case? "abc" "def" "ghi" -> "abc def ghi"
 				WIZ_STRING_TYPE result;
 
 				for (int i = 0; i < operandNum; ++i) {
@@ -410,17 +385,17 @@ namespace wiz {
 
 				operandStack.push(result);
 			}
-			else if ("$return_value" == str)
+			else if ("$return_value"sv == str)
 			{
 				operandStack.push(excuteData.info.return_value);
 			}
 			// cf) empty test!!
 			///ToDo - GetList -> // GetItemListIdxByIListIdx, GetUserTypeLisIdxtByIListIdx ?
-			else if ("$back" == str) // ex) for x  = { 0 1 2 3 .. }, for usertaypelist? and mixed? and need more test!
+			else if ("$back"sv == str) // ex) for x  = { 0 1 2 3 .. }, for usertaypelist? and mixed? and need more test!
 			{
 				WIZ_STRING_TYPE x = operandStack.pop();
 
-				std::string value = wiz::load_data::LoadData::GetItemListData(global, x.ToString(), "TRUE", excuteData, builder);
+				std::string value = wiz::load_data::LoadData::GetItemListData(global, x.ToString(), excuteData);
 				wiz::load_data::UserType ut;
 				wiz::load_data::LoadData::LoadDataFromString(value, ut);
 
@@ -436,9 +411,10 @@ namespace wiz {
 				}
 			}
 			// pop_back or front - remove this function?
-			else if ("$pop_back" == str) // and for usertypelist? and mixed?, usertype-> "~"
+			else if ("$pop_back"sv == str) // and for usertypelist? and mixed?, usertype-> "~"
 			{
 				std::string x = operandStack.pop().ToString();
+
 				WIZ_STRING_TYPE name;
 				for (int i = x.size() - 1; i >= 0; --i)
 				{
@@ -449,10 +425,12 @@ namespace wiz {
 					}
 				}
 
-				if (x.empty()) { x = "."; }
+				if (x.empty()) {
+					x = ".";
+				}
 
 				wiz::load_data::UserType* ut = nullptr;
-				auto finded = wiz::load_data::UserType::Find(&global, x, builder);
+				auto finded = wiz::load_data::UserType::Find(&global, x);
 				ut = finded.second[0];
 
 				if (ut->IsItemList(ut->GetIListSize() - 1))
@@ -468,11 +446,11 @@ namespace wiz {
 				}
 			}
 			// todo - $front, pop-front.
-			else if ("$front" == str)
+			else if ("$front"sv == str)
 			{
 				std::string x = operandStack.pop().ToString();
 
-				std::string value = wiz::load_data::LoadData::GetItemListData(global, x, "TRUE", excuteData, builder);
+				std::string value = wiz::load_data::LoadData::GetItemListData(global, x, excuteData);
 				wiz::load_data::UserType ut;
 				wiz::load_data::LoadData::LoadDataFromString(value, ut);
 
@@ -486,7 +464,7 @@ namespace wiz {
 					operandStack.push("\"" + x->ToString() + "\"");
 				}
 			}
-			else if ("$pop_front" == str)
+			else if ("$pop_front"sv == str)
 			{
 				std::string x = operandStack.pop().ToString();
 				std::string name;
@@ -502,7 +480,7 @@ namespace wiz {
 				if (x.empty()) { x = "."; }
 
 				wiz::load_data::UserType* ut = nullptr;
-				auto finded = wiz::load_data::UserType::Find(&global, x, builder);
+				auto finded = wiz::load_data::UserType::Find(&global, x);
 				ut = finded.second[0];
 
 				if (ut->IsItemList(0))
@@ -517,7 +495,7 @@ namespace wiz {
 					ut->RemoveUserTypeList(0);
 				}
 			}
-			else if ("$get" == str)
+			else if ("$get"sv == str)
 			{
 				std::string x = operandStack.pop().ToString();
 
@@ -531,13 +509,13 @@ namespace wiz {
 					x = "/./" + x;
 					if ('/' == x[0])
 					{
-						std::string temp = Find(now, x, builder); if (!temp.empty()) { x = temp; operandStack.push(x); return true; }
+						std::string temp = Find(now, x); if (!temp.empty()) { x = temp; operandStack.push(x); return true; }
 					}
 				}
 				else {
 					if ('/' == x[0])
 					{
-						std::string temp = Find(&global, x, builder); if (!temp.empty()) { x = temp; operandStack.push(x); return true; }
+						std::string temp = Find(&global, x); if (!temp.empty()) { x = temp; operandStack.push(x); return true; }
 					}
 				}
 
@@ -553,13 +531,15 @@ namespace wiz {
 				operandStack.push(std::string());
 				return true;
 			}
-			else if ("$size" == str)
+			else if ("$size"sv == str)
 			{
 				std::string x = operandStack.pop().ToString();
 
 				if ('/' == x[0])
 				{
-					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x, builder).second[0];
+				//	std::cout << global.ToString();
+
+					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x).second[0];
 					x = wiz::toStr(ut->GetItemListSize());
 				}
 				else
@@ -569,13 +549,13 @@ namespace wiz {
 
 				operandStack.push(x);
 			}
-			else if ("$size2" == str)
+			else if ("$size2"sv == str)
 			{
 				std::string x = operandStack.pop().ToString();
 
 				if ('/' == x[0])
 				{
-					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x, builder).second[0];
+					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x).second[0];
 					x = wiz::toStr(ut->GetUserTypeListSize());
 				}
 				else
@@ -585,7 +565,7 @@ namespace wiz {
 
 				operandStack.push(x);
 			}
-			else if ("$element" == str) // for list
+			else if ("$element"sv == str) // for list
 			{
 				std::string x = operandStack.pop().ToString(); // list_name
 				WIZ_STRING_TYPE y = operandStack.pop(); // idx
@@ -593,7 +573,7 @@ namespace wiz {
 
 				if ('/' == x[0])
 				{
-					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x, builder).second[0];
+					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x).second[0];
 					x = ToString(ut->GetItemList(idx).Get(0));
 				}
 				else
@@ -604,14 +584,14 @@ namespace wiz {
 				operandStack.push(x);
 			}
 			// it_name
-			else if ("$name" == str) {
+			else if ("$name"sv == str) {
 				std::string x = operandStack.pop().ToString(); // list_name
 				WIZ_STRING_TYPE y = operandStack.pop(); // idx
 				int idx = stoi(y.ToString());
 
 				if ('/' == x[0])
 				{
-					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x, builder).second[0];
+					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x).second[0];
 					x = ToString(ut->GetItemList(idx).GetName());
 				}
 				else
@@ -622,14 +602,14 @@ namespace wiz {
 				operandStack.push(x);
 			}
 			// ut_name
-			else if ("$name2" == str) {
+			else if ("$name2"sv == str) {
 				std::string x = operandStack.pop().ToString(); // list_name
 				WIZ_STRING_TYPE y = operandStack.pop(); // idx
 				int idx = stoi(y.ToString());
 
 				if ('/' == x[0])
 				{
-					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x, builder).second[0];
+					wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, x).second[0];
 					x = ToString(ut->GetUserTypeList(idx)->GetName());
 				}
 				else
@@ -639,7 +619,7 @@ namespace wiz {
 
 				operandStack.push(x);
 			}
-			else if ("$regex" == str) {
+			else if ("$regex"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				std::string rgx_str = operandStack.pop().ToString();
 
@@ -659,10 +639,10 @@ namespace wiz {
 					operandStack.push("ERROR in $regex");
 				}
 			}
-			else if ("$eval" == str) { //// now, no need ?
+			else if ("$eval"sv == str) { //// now, no need ?
 				std::string _str = operandStack.pop().ToString();
 
-				bool chk = wiz::load_data::Utility::ChkExist(_str);
+				bool chk = _str.size() >=2 && _str[0] == _str.back() && _str.back() == '\"';
 				if (chk) {
 				}
 				else {
@@ -671,13 +651,17 @@ namespace wiz {
 				}
 				_str = _str.substr(1, _str.size() - 2);
 				{
-					WIZ_STRING_TYPE result = ToBool4(now, global, _str, excuteData, builder);
+					UserType ut;
+
+					wiz::load_data::LoadData::LoadDataFromString(_str, ut);
+					
+					WIZ_STRING_TYPE result = ToBool4(now, global, ut, excuteData);
 
 					operandStack.push(std::move(result));
 				}
 			}
 			// big
-			else if ("$is_quoted_str" == str)
+			else if ("$is_quoted_str"sv == str)
 			{
 				std::string _str = operandStack.pop().ToString();
 				if (_str.size() >= 2 && _str[0] == _str.back() && '\"' == _str[0])
@@ -689,7 +673,7 @@ namespace wiz {
 				}
 			}
 			// small
-			else if ("$is_quoted_str2" == str)
+			else if ("$is_quoted_str2"sv == str)
 			{
 				std::string _str = operandStack.pop().ToString();
 				if (_str.size() >= 2 && _str[0] == _str.back() && '\'' == _str[0])
@@ -700,25 +684,25 @@ namespace wiz {
 					operandStack.push("FALSE");
 				}
 			}
-			else if ("$to_quoted_str" == str) {
+			else if ("$to_quoted_str"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				_str.push_back('\"');
 				_str.insert(_str.begin(), '\"');
 				operandStack.push(_str);
 			}
-			else if ("$to_quoted_str2" == str) {
+			else if ("$to_quoted_str2"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				_str.push_back('\'');
 				_str.insert(_str.begin(), '\'');
 				operandStack.push(_str);
 			}
-			else if ("$add_small_quoted" == str) {
+			else if ("$add_small_quoted"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				_str.push_back('\'');
 				_str.insert(_str.begin(), '\'');
 				operandStack.push(_str);
 			}
-			else if ("$remove_quoted" == str) { // chk "" WIZ_STRING_TYPE problem?
+			else if ("$remove_quoted"sv == str) { // chk "" WIZ_STRING_TYPE problem?
 				std::string _str = operandStack.pop().ToString();
 
 				if (_str.size() > 0 && _str.front() == _str.back()
@@ -730,7 +714,7 @@ namespace wiz {
 
 				operandStack.push(_str);
 			}
-			else if ("$remove_quoted2" == str) { // chk "" WIZ_STRING_TYPE problem?
+			else if ("$remove_quoted2"sv == str) { // chk "" WIZ_STRING_TYPE problem?
 				std::string _str = operandStack.pop().ToString();
 
 				if (_str.size() > 0 && _str.front() == _str.back()
@@ -742,7 +726,7 @@ namespace wiz {
 
 				operandStack.push(str);
 			}
-			else if ("$remove_small_quoted" == str) { // chk "" WIZ_STRING_TYPE problem?
+			else if ("$remove_small_quoted"sv == str) { // chk "" WIZ_STRING_TYPE problem?
 				std::string _str = operandStack.pop().ToString();
 
 				if (_str.size() > 0 && _str.front() == _str.back()
@@ -754,7 +738,7 @@ namespace wiz {
 
 				operandStack.push(str);
 			}
-			else if ("$get_object_str" == str) {
+			else if ("$get_object_str"sv == str) {
 				std::string object_name = operandStack.pop().ToString();
 				object_name = wiz::String::substring(object_name, 1, object_name.size() - 2);
 				std::string event_id = operandStack.pop().ToString();
@@ -774,80 +758,11 @@ namespace wiz {
 				}
 				operandStack.push("ERROR in $getOjbectStr");
 			}
-			else if ("$add_paren" == str) { // removal?
+			else if ("$add_paren"sv == str) { // removal?
 				std::string temp = operandStack.pop().ToString();
 				operandStack.push(" { " + temp + " } ");
 			}
-			/*
-			else if ("$test" == str) { // for lambda test.
-			WIZ_STRING_TYPE temp = operandStack.pop();
-
-			temp = wiz::String::replace(temp, "\"", "");
-
-			temp = "\"" + temp + "\"";
-
-			operandStack.push(temp);
-			}
-			else if ("$test2" == str) { // for lambda test?
-			WIZ_STRING_TYPE temp = operandStack.pop();
-
-			temp = wiz::String::substring(temp, 1, temp.size() - 2);
-
-			operandStack.push(temp);
-			}
-			else if ("$test3" == str) { // for lambda test?
-			WIZ_STRING_TYPE temp = operandStack.pop();
-
-			operandStack.push(temp);
-			}
-			else if ("$test4" == str) {
-			WIZ_STRING_TYPE temp = operandStack.pop();
-
-			if (temp.size() >= 3 && temp.back() == temp.front() && temp.back() == '\"') {
-			temp = wiz::String::substring(temp, 1, temp.size() - 2);
-			}
-
-			operandStack.push(temp);
-			}
-			else if ("$test5" == str) { // chk!!
-			WIZ_STRING_TYPE temp = operandStack.pop();
-			int braceNum = 0;
-			bool first = true;
-
-			int start = String::find(temp, "$return", 0) + 7;
-			for (int i = start; i < temp.size(); ++i) {
-			if ('{' == temp[i]) {
-			if (first) {
-			temp.insert(temp.begin() + i + 1, '\"');
-			}
-			else {
-			braceNum++;
-			}
-			first = false;
-			}
-			else if ('}' == temp[i]) {
-			braceNum--;
-			if (!first && 0 == braceNum) {
-			temp.insert(temp.begin() + i + 1, '\"');
-			}
-			}
-			//cout << temp << endl;
-			}
-
-			operandStack.push(temp);
-			}
-			else if ("$test6" == str) { // for lambda test.
-			std::vector<WIZ_STRING_TYPE> vec;
-			for (int i = 0; i < operandNum; ++i) {
-			vec.push_back(operandStack.pop());
-			}
-			for (int i = vec.size() - 1; i >= 0; --i) {
-			vec[i] = wiz::String::replace(vec[i], "\"", "");
-			operandStack.push(vec[i]);
-			}
-			}
-			*/
-			else if ("$get_item_name" == str) {
+			else if ("$get_item_name"sv == str) {
 				wiz::load_data::UserType ut;
 				std::string statement;
 
@@ -858,7 +773,7 @@ namespace wiz {
 
 				operandStack.push(wiz::ToString(ut.GetItemList(0).GetName()));
 			}
-			else if ("$get_item_value" == str) { // why?
+			else if ("$get_item_value"sv == str) { // why?
 				wiz::load_data::UserType ut;
 				std::string statement;
 				int idx = 0;
@@ -872,7 +787,7 @@ namespace wiz {
 
 				operandStack.push(ToString(ut.GetItemList(idx).Get(0)));
 			}
-			else if ("$get_item_size" == str) {
+			else if ("$get_item_size"sv == str) {
 				wiz::load_data::UserType ut;
 				std::string statement;
 
@@ -883,10 +798,10 @@ namespace wiz {
 
 				operandStack.push(wiz::_toString(ut.GetItem(wiz::ToString(ut.GetItemList(0).GetName())).size()));
 			}
-			else if ("$is_empty_string" == str) {
+			else if ("$is_empty_string"sv == str) {
 				operandStack.push(operandStack.pop().ToString().empty() ? "TRUE" : "FALSE");
 			}
-			else if ("$event_result" == str) {
+			else if ("$event_result"sv == str) {
 				std::vector<std::string> eventVec;
 				for (int i = 0; i < operandNum; ++i) {
 					eventVec.push_back(operandStack.pop().ToString());
@@ -898,9 +813,9 @@ namespace wiz {
 				}
 				statements2 = statements2 + " } }";
 				wiz::load_data::UserType* eventsTemp = excuteData.pEvents;
-				wiz::load_data::LoadData::AddData(*eventsTemp, "/root", statements2, "TRUE", ExcuteData(), builder);
+				wiz::load_data::LoadData::AddData(*eventsTemp, "/root", statements2, ExecuteData());
 				//cout << " chk " << statements2 << endl;
-				ExcuteData _excuteData;
+				ExecuteData _excuteData;
 				_excuteData.pModule = excuteData.pModule;
 				_excuteData.pObjectMap = excuteData.pObjectMap;
 				_excuteData.pEvents = eventsTemp;
@@ -921,7 +836,7 @@ namespace wiz {
 					}
 				}
 			}
-			else if ("$get_item_value2" == str) {
+			else if ("$get_item_value2"sv == str) {
 				const int i = stoi(operandStack.pop().ToString());
 
 				if (now) {
@@ -933,15 +848,15 @@ namespace wiz {
 					return false;
 				}
 			}
-			else if ("$space" == str) {
+			else if ("$space"sv == str) {
 				operandStack.push(" ");
 				return true;
 			}
-			else if ("$empty" == str) {
+			else if ("$empty"sv == str) {
 				operandStack.push("");
 				return true;
 			}
-			else if ("$move_up" == str) {
+			else if ("$move_up"sv == str) {
 			std::string dir;
 
 				for (int i = 0; i < operandNum; ++i) {
@@ -956,11 +871,8 @@ namespace wiz {
 					dir = String::substring(dir, 3);
 				}
 
-				StringTokenizer tokenizer(dir, "/", builder, 1);
-				std::vector<std::string> tokenVec;
-				while (tokenizer.hasMoreTokens()) {
-					tokenVec.push_back(tokenizer.nextToken());
-				}
+				std::vector<std::string> tokenVec = tokenize(dir, '/');
+
 				dir = "/./";
 				if (tokenVec.empty()) { operandStack.push(dir); return true; }
 				for (int i = 0; i < tokenVec.size() - 1; ++i) {
@@ -970,7 +882,7 @@ namespace wiz {
 				return true;
 			}
 			
-			else if ("$lambda" == str) {
+			else if ("$lambda"sv == str) {
 				std::vector<std::string> store;
 				for (int i = 0; i < operandNum; ++i) {
 					store.push_back(operandStack.pop().ToString());
@@ -1004,7 +916,7 @@ namespace wiz {
 
 					std::string result;
 					{
-						ExcuteData _excuteData;
+						ExecuteData _excuteData;
 						_excuteData.noUseInput = excuteData.noUseInput;
 						_excuteData.noUseOutput = excuteData.noUseOutput;
 
@@ -1030,7 +942,7 @@ namespace wiz {
 				return true;
 			}
 			
-			else if ("$to_float_from_integer" == str) { // integer, floating point number -> floating point number(long double)
+			else if ("$to_float_from_integer"sv == str) { // integer, floating point number -> floating point number(long double)
 				std::string value = operandStack.pop().ToString();
 				if (wiz::load_data::Utility::IsInteger(value)) {
 					long double x = stoll(value);
@@ -1040,7 +952,7 @@ namespace wiz {
 					operandStack.push("it is not integer");
 				}
 			}
-			else if ("$to_integer_from_float" == str) { // integer, floating point number -> floating point number(long double)
+			else if ("$to_integer_from_float"sv == str) { // integer, floating point number -> floating point number(long double)
 				std::string value = operandStack.pop().ToString();
 				if (wiz::load_data::Utility::IsDouble(value)) {
 					long long x = std::stold(value);
@@ -1051,9 +963,9 @@ namespace wiz {
 				}
 			}
 			//floor, ceiling, round,
-			else if ("$floor" == str) {
+			else if ("$floor"sv == str) {
 				std::string value = operandStack.pop().ToString();
-				if (wiz::load_data::Utility::IsDouble) {
+				if (wiz::load_data::Utility::IsDouble(value) ){
 					long double x = std::floor(std::stold(value));
 					operandStack.push(wiz::_toString(x));
 				}
@@ -1061,9 +973,9 @@ namespace wiz {
 					operandStack.push("only double can");
 				}
 			}
-			else if ("$ceiling" == str) {
+			else if ("$ceiling"sv == str) {
 				std::string value = operandStack.pop().ToString();
-				if (wiz::load_data::Utility::IsDouble) {
+				if (wiz::load_data::Utility::IsDouble(value)) {
 					long double x = std::ceil(std::stold(value));
 					operandStack.push(wiz::_toString(x));
 				}
@@ -1071,9 +983,9 @@ namespace wiz {
 					operandStack.push("only double can");
 				}
 			}
-			else if ("$round" == str) {
+			else if ("$round"sv == str) {
 				std::string value = operandStack.pop().ToString();
-				if (wiz::load_data::Utility::IsDouble) {
+				if (wiz::load_data::Utility::IsDouble(value)) {
 					long double x = std::round(std::stold(value));
 					operandStack.push(wiz::_toString(x));
 				}
@@ -1082,33 +994,33 @@ namespace wiz {
 				}
 			}
 			//contains,
-			else if ("$contains" == str) {
+			else if ("$contains"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				std::string chk_str = operandStack.pop().ToString();
 
 				operandStack.push(std::string::npos != _str.find(chk_str) ? "TRUE" : "FALSE");
 			}
 			//starts_with, ends_with,
-			else if ("$starts_with" == str) {
+			else if ("$starts_with"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				std::string chk_str = operandStack.pop().ToString();
 
 				operandStack.push(wiz::String::startsWith(_str, chk_str) ? "TRUE" : "FALSE");
 			}
-			else if ("$ends_with" == str) {
+			else if ("$ends_with"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				std::string chk_str = operandStack.pop().ToString();
 
 				operandStack.push(wiz::String::endsWith(_str, chk_str) ? "TRUE" : "FALSE");
 			}
 			//WIZ_STRING_TYPE - length,
-			else if ("$string_length" == str) {
+			else if ("$string_length"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 	
 				operandStack.push(wiz::_toString(_str.size()));
 			}
 			//substring ?
-			else if ("$substring" == str) {
+			else if ("$substring"sv == str) {
 				std::string _str = operandStack.pop().ToString();
 				long long begin = stoll(operandStack.pop().ToString());
 				long long end = stoll(operandStack.pop().ToString());
@@ -1117,28 +1029,28 @@ namespace wiz {
 			}
 
 			// todo - Is~ ?? others ??
-			else if ("$is_integer_type" == str) {
+			else if ("$is_integer_type"sv == str) {
 				operandStack.push(wiz::load_data::Utility::IsInteger(operandStack.pop().ToString()) ? "TRUE" : "FALSE");
 			}
-			else if ("$is_float_type" == str) {
+			else if ("$is_float_type"sv == str) {
 				operandStack.push(wiz::load_data::Utility::IsDouble(operandStack.pop().ToString()) ? "TRUE" : "FALSE");
 			}
-			else if ("$is_pure_string_type" == str) {
+			else if ("$is_pure_string_type"sv == str) {
 				operandStack.push("STRING" == wiz::load_data::Utility::GetType(operandStack.pop().ToString()) ? "TRUE" : "FALSE");
 			}
-			else if ("$get_type" == str) {
+			else if ("$get_type"sv == str) {
 				operandStack.push(wiz::load_data::Utility::GetType(operandStack.pop().ToString()));
 			}
-			else if ("$is_itemtype_exist" == str) { // 2? - using ToBool4?
-				operandStack.push(wiz::load_data::LoadData::Find(&global, operandStack.pop().ToString(), builder).empty() ? "FALSE" : "TRUE");
+			else if ("$is_itemtype_exist"sv == str) { // 2? - using ToBool4?
+				operandStack.push(wiz::load_data::LoadData::Find(&global, operandStack.pop().ToString()).empty() ? "FALSE" : "TRUE");
 			}
-			else if ("$is_usertype_exist" == str) { // 2? - using ToBool4?
-				operandStack.push(wiz::load_data::UserType::Find(&global, operandStack.pop().ToString(), builder).first ? "TRUE" : "FALSE");
+			else if ("$is_usertype_exist"sv == str) { // 2? - using ToBool4?
+				operandStack.push(wiz::load_data::UserType::Find(&global, operandStack.pop().ToString()).first ? "TRUE" : "FALSE");
 			}
 
 			else {
 				if (wiz::String::startsWith(str.ToString(), "$") && str.ToString().size() >= 2) {
-					std::cout << "no exist in load-data " << str.ToString() << std::endl;
+					wiz::Out << "no exist in load-data " << str.ToString() << ENTER;
 					return false;
 				}
 				return true;
@@ -1148,498 +1060,128 @@ namespace wiz {
 			// remove "
 		}
 
-		std::string LoadData::ToBool3(wiz::load_data::UserType& global, const wiz::ArrayMap<std::string, std::string>& parameters, const std::string& temp,
-			const EventInfo& info, wiz::StringBuilder* builder) /// has bug!
+		WIZ_STRING_TYPE LoadData::ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const wiz::load_data::UserType& temp, const ExecuteData& excuteData)
 		{
-			wiz::StringTokenizer tokenizer(temp, std::vector<std::string>{ "/" }, builder, 1);
-			std::vector<std::string> tokenVec;
-			std::string result;
+			WIZ_STRING_TYPE result, _temp;
+			size_t user_count = 0;
+			size_t item_count = 0;
 
-			tokenVec.reserve(tokenizer.countTokens());
-			while (tokenizer.hasMoreTokens()) {
-				tokenVec.push_back(tokenizer.nextToken());
-			}
-
-			for (int i = 0; i < tokenVec.size(); ++i)
-			{
-				result += "/";
-				if (wiz::String::startsWith(tokenVec[i], "$parameter.")) {
-					int last = -1;
-					for (int j = 0; j < tokenVec[i].size(); ++j)
-					{
-						if (wiz::isWhitespace(tokenVec[i][j]) || tokenVec[i][j] == '{' || tokenVec[i][j] == '}' || tokenVec[i][j] == '=') {
-							last = j - 1;
-							break;
-						}
-					}
-					if (last != -1)
-					{
-						std::string _temp = FindParameters(parameters, wiz::String::substring(tokenVec[i], 0, last));
-
-						if (!_temp.empty()) {
-							tokenVec[i] = wiz::String::replace(wiz::String::substring(tokenVec[i], 0, last), wiz::String::substring(tokenVec[i], 0, last), std::move(_temp))
-								+ wiz::String::substring(tokenVec[i], last + 1);
-						}
-					}
-					else
-					{
-						std::string _temp = FindParameters(parameters, tokenVec[i]);
-						if (!_temp.empty()) {
-							tokenVec[i] = std::move(_temp);
-						}
-					}
+			for (size_t i = 0; i < temp.GetIListSize(); ++i) {
+				if (i > 0) {
+					result += " ";
 				}
-				else if (wiz::String::startsWith(tokenVec[i], "$local.")) {
-					int last = -1;
-					for (int j = 0; j < tokenVec[i].size(); ++j)
-					{
-						if (wiz::isWhitespace(tokenVec[i][j]) || tokenVec[i][j] == '{' || tokenVec[i][j] == '}' || tokenVec[i][j] == '=') {
-							last = j - 1;
-							break;
-						}
-					}
-					if (last != -1)
-					{
-						std::string _temp = FindLocals(info.locals, wiz::String::substring(tokenVec[i], 0, last));
-
-						if (!_temp.empty()) {
-							tokenVec[i] = wiz::String::replace(wiz::String::substring(tokenVec[i], 0, last), wiz::String::substring(tokenVec[i], 0, last), std::move(_temp))
-								+ wiz::String::substring(tokenVec[i], last + 1);
-						}
-					}
-					else
-					{
-						std::string _temp = FindLocals(info.locals, tokenVec[i]);
-						if (!_temp.empty()) {
-							tokenVec[i] = std::move(_temp);
-						}
-					}
-				}
-
-				result += std::move(tokenVec[i]);
-			}
-			return result;
-		}
-		std::string LoadData::ToBool3(wiz::load_data::UserType& global, const wiz::ArrayMap<std::string, std::string>& parameters, std::string&& temp,
-			const EventInfo& info, wiz::StringBuilder* builder) /// has bug!
-		{
-			wiz::StringTokenizer tokenizer(std::move(temp), std::vector<std::string>{ "/" }, builder, 1);
-			std::vector<std::string> tokenVec;
-			std::string result;
-
-			tokenVec.reserve(tokenizer.countTokens());
-			while (tokenizer.hasMoreTokens()) {
-				tokenVec.push_back(tokenizer.nextToken());
-			}
-
-			for (int i = 0; i < tokenVec.size(); ++i)
-			{
-				result += "/";
-				if (wiz::String::startsWith(tokenVec[i], "$parameter.")) {
-					int last = -1;
-					for (int j = 0; j < tokenVec[i].size(); ++j)
-					{
-						if (wiz::isWhitespace(tokenVec[i][j]) || tokenVec[i][j] == '{' || tokenVec[i][j] == '}' || tokenVec[i][j] == '=') {
-							last = j - 1;
-							break;
-						}
-					}
-					if (last != -1)
-					{
-						std::string _temp = FindParameters(parameters, wiz::String::substring(tokenVec[i], 0, last));
-
-						if (!_temp.empty()) {
-							tokenVec[i] = wiz::String::replace(wiz::String::substring(tokenVec[i], 0, last), wiz::String::substring(tokenVec[i], 0, last), std::move(_temp))
-								+ wiz::String::substring(tokenVec[i], last + 1);
-						}
-					}
-					else
-					{
-						std::string _temp = FindParameters(parameters, tokenVec[i]);
-						if (!_temp.empty()) {
-							tokenVec[i] = std::move(_temp);
-						}
-					}
-				}
-				else if (wiz::String::startsWith(tokenVec[i], "$local.")) {
-					int last = -1;
-					for (int j = 0; j < tokenVec[i].size(); ++j)
-					{
-						if (wiz::isWhitespace(tokenVec[i][j]) || tokenVec[i][j] == '{' || tokenVec[i][j] == '}' || tokenVec[i][j] == '=') {
-							last = j - 1;
-							break;
-						}
-					}
-					if (last != -1)
-					{
-						std::string _temp = FindLocals(info.locals, wiz::String::substring(tokenVec[i], 0, last));
-
-						if (!_temp.empty()) {
-							tokenVec[i] = wiz::String::replace(wiz::String::substring(tokenVec[i], 0, last), wiz::String::substring(tokenVec[i], 0, last), std::move(_temp))
-								+ wiz::String::substring(tokenVec[i], last + 1);
-						}
-					}
-					else
-					{
-						std::string _temp = FindLocals(info.locals, tokenVec[i]);
-						if (!_temp.empty()) {
-							tokenVec[i] = std::move(_temp);
-						}
-					}
-				}
-
-				result += std::move(tokenVec[i]);
-			}
-			return result;
-		}
-		std::string LoadData::ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const std::string& temp, const ExcuteData& excuteData, wiz::StringBuilder* builder)
-		{
-			std::string result = temp;
-
-			if (false == result.empty() && '^' == result[0]) { // for pass ToBool4
-				result.erase(result.begin());
-				return result;
-			}
-			//cout << "temp is " << temp << endl;
-			/*set<WIZ_STRING_TYPE> utNames; // rename?
-			{ // removal??
-			UserType utTemp;
-			LoadData::LoadDataFromString(result, utTemp);
-
-			for (int i = 0; i < utTemp.GetUserTypeListSize(); ++i) {
-			if (utTemp.GetUserTypeList(i)->GetName().empty() == false
-			&& utTemp.GetUserTypeList(i)->GetName()[0] == '$'
-			) {
-			utNames.insert(utTemp.GetUserTypeList(i)->GetName());
-			}
-			}
-			}*/
-			//	cout << "result is " << result << endl;
-
-			wiz::ArrayStack<std::string> resultStack;
-			//wiz::load_data::UserType ut;
-			bool chk = false;
-			int count_change = 0;
-
-			bool flag_A = false;
-			if (result.size() > 1 && result[0] == '/')
-			{
-				flag_A = true;
-			}
-			bool flag_B = false;
-			for (int i = 0; i < result.size(); ++i) {
-				if (result[i] == '/') {
-					flag_B = true;
-					break;
-				}
-			}
-			if (flag_B) {
-				result = ToBool3(global, excuteData.info.parameters, std::move(result), excuteData.info, builder);
-			}
-			if (result.empty()) { return ""; }
-			if (!flag_A && flag_B) {
-				result = std::string(result.c_str() + 1, result.size() - 1);
-			}
-			//wiz::load_data::LoadData::LoadDataFromString(result, ut);
-			//result = ut.ToString();
-			if (result.empty()) { return result; }
-
-			//if (ut.empty()) {
-			//	return "";
-			//}
-			//	if (ut.GetUserTypeListSize() == 0 && ut.GetItemListSize() == 1) /// chk
-			if (!flag_B) { // chk
-				if ('/' == result[0] && result.size() > 1)
-				{
-					std::string _temp = Find(&global, result, builder);
-
-					if (!_temp.empty()) {
-						result = std::move(_temp);
-						return result;
-					}
-				}
-				else if (wiz::String::startsWith(result, "$local.")) {
-					std::string _temp = FindLocals(excuteData.info.locals, result);
-					if (!_temp.empty()) {
-						result = std::move(_temp);
-						return result;
-					}
-				}
-				else if (wiz::String::startsWith(result, "$parameter.")) {
-					std::string _temp = FindParameters(excuteData.info.parameters, result);
-					if (!_temp.empty()) {
-						result = std::move(_temp);
-						return result;
-					}
-				}
-
-			}
-
-			std::vector<std::string> tokenVec;
-			tokenVec.reserve(result.size());
-
-			{
-				wiz::StringTokenizer tokenizer(std::move(result), { " ", "\n", "\t", "\r" }, builder, 1); // , "{", "=", "}" }); //
-																										  //wiz::StringTokenizer tokenizer2(result, { " ", "\n", "\t", "\r" } ); //
-					/*																						//vector<WIZ_STRING_TYPE> tokenVec2;
-				int len = 0;
-				for (int i = 0; i < result.size(); ++i) {
-					bool chk = wiz::isWhitespace(result[i]);
-					if (len > 0 && chk) {
-						tokenVec.push_back(std::string(&result[i] - len, len));
-						len = 0;
-					}
-					else if (chk) {
-						//
-					}
-					else {
-						len++;
-					}
-				}
-
-				if (len > 0) {
-					tokenVec.push_back(std::string(result.c_str() + result.size() - len, len));
-				}
-				*/
-				tokenVec.reserve(tokenizer.countTokens());
-				while (tokenizer.hasMoreTokens()) {
-					tokenVec.push_back(tokenizer.nextToken());
-				}
-				
-
-				for (int i = tokenVec.size() - 1; i >= 0; --i)
-				{
-					std::string before = tokenVec[i];
-					if ('/' == tokenVec[i][0] && tokenVec[i].size() > 1)
-					{
-						std::string _temp = Find(&global, tokenVec[i], builder);
-
-						if ("" != _temp) {
-							tokenVec[i] = std::move(_temp);
-						}
-					}
-					else if (wiz::String::startsWith(tokenVec[i], "$local.")) { // && length?
-						std::string _temp = FindLocals(excuteData.info.locals, tokenVec[i]);
-						if (!_temp.empty()) {
-							tokenVec[i] = std::move(_temp);
-						}
-					}
-					else if (wiz::String::startsWith(tokenVec[i], "$parameter.")) { // && length?
-						std::string _temp = FindParameters(excuteData.info.parameters, tokenVec[i]);
-						if (!_temp.empty()) {
-							tokenVec[i] = std::move(_temp);
-						}
-					}
-				}
-
-				//while (tokenizer2.hasMoreTokens()) {
-				//	tokenVec2.push_back(tokenizer2.nextToken());
-				//}
-				//	cout << "result is " << result << endl;
-				//result = "";
-
-				//int j = tokenVec.size() - 1;
-				//for (int i = tokenVec2.size() - 1; i >= 0 && j >= 0; --i) {
-				//	if (tokenVec2[i] == "{" || tokenVec2[i] == "}" || tokenVec2[i] == "=") { 
-				//		continue;
-				//	}
-				//	else {
-				//		tokenVec2[i] = tokenVec[j];
-				//		--j;
-				//	}
-				//}
-				//	result = "";
-				//	for (int i = 0; i < tokenVec.size(); ++i) {
-				//		if (i != 0) { result = result + " "; }
-				//		
-				//		result += tokenVec[i];
-				//}
-			}
-			//cout << "result is " << result << endl;
-			//
-			wiz::ArrayStack<WIZ_STRING_TYPE> operandStack;
-			wiz::ArrayStack<std::string> operatorStack;
-
-			operandStack.reserve(tokenVec.size());
-			operatorStack.reserve(tokenVec.size());
-
-			//wiz::StringTokenizer tokenizer(result, { " ", "\n", "\t", "\r" }, builder, 1);
-			//vector<WIZ_STRING_TYPE> tokenVec;
-
-			//while (tokenizer.hasMoreTokens()) {
-			//		tokenVec.push_back(tokenizer.nextToken());
-			//}
-
-			for (int i = tokenVec.size() - 1; i >= 0; --i) {
-				// todo - chk first? functions in Event
-				if (String::startsWith(tokenVec[i], "$parameter.") ||
-					//	tokenVec[i] == "$parameter" || // for lambda
-					//	tokenVec[i] == "$local" || // for lambda
-					String::startsWith(tokenVec[i], "$local.") ||
-					//	"$return" == tokenVec[i] || // for lambda
-					'$' != tokenVec[i][0] || ('$' == tokenVec[i][0] && tokenVec[i].size() == 1)
-					) {
-					operandStack.push(tokenVec[i]);
-				}
-				else
-				{
-					// cout << tokenVec[i] << endl;
-					operandStack.pop(); // =
-					operandStack.pop(); // {
-					operatorStack.push(tokenVec[i]);
-
-					if (false == operation(now, global, tokenVec[i], operandStack, excuteData, builder)) // chk!!
-					{
-						// chk removal here?
-						std::cout << " false " << std::endl;
-						GETCH();
-						//
-						operatorStack.pop();
-						operandStack.push("{");
-						operandStack.push("=");
-						operandStack.push(tokenVec[i]);
-						continue;
-					}
-
-					operandStack[operandStack.size() - 2] = operandStack[operandStack.size() - 1];
-					operandStack.pop(); // } 
-				}
-			}
-
-			//std::vector<WIZ_STRING_TYPE> strVec;
-			//std::stack<int> chkBrace;
-
-			//chkBrace.push(0);
-
-			//for (int i = operandStack.size() - 1; i >= 0; --i)
-			{
-				/*
-				if (operandStack[i] == "}") {
-				chkBrace.top()++;
-				if (chkBrace.top() == 2 && !(i + 4 <= operandStack.size() - 1 && operandStack[i+3] == "=" && operandStack[i+4][0] == '$' && operandStack[i+4].size() > 1))
-				{
-				WIZ_STRING_TYPE temp = strVec.back();
-				strVec.pop_back();
-				strVec.pop_back();
-				strVec.push_back(temp);
-
-				chkBrace.pop();
-				continue;
-				}
-				chkBrace.pop();
-				}
-				else if (operandStack[i] == "{") {
-				chkBrace.top()++;
-				chkBrace.push(0);
+				if (temp.IsItemList(i)) {
+					_temp = ToBool4(now, global, temp.GetItemList(item_count), excuteData);
+					result += _temp;
+					item_count++;
 				}
 				else {
-				chkBrace.top()++;
-				}
-				*/
-				//strVec.push_back(operandStack[i]);
-			}
-
-			//cout << "result is " << result << endl;
-			//result = "";
-			//builder->Clear();
-			//for (int i = 0; i < strVec.size(); ++i) {
-			//	if (i != 0) { 
-			//	result = result + " "; 
-			//		builder->Append(" ", 1);
-			//	}
-			// result = result + strVec[i] + " "; // add space!
-			//	builder->Append(strVec[i].c_str(), strVec[i].size());
-			//	builder->Append(" ", 1);
-			//}
-			//result = WIZ_STRING_TYPE(builder->Str(), builder->size());
-			// todo!  $C = 3 => $C = { 3 } 
-			{
-				//StringTokenizer tokenizer(result, builder, 1);
-				//result = "";
-				builder->Clear();
-
-				//while (tokenizer.hasMoreTokens()) {
-				for (int i = operandStack.size() - 1; i >= 0; --i) {
-					//const WIZ_STRING_TYPE temp = strVec[i]; // tokenizer.nextToken();
-					/*
-					// chk!! @$paramter - removal? @$. (for regex)??
-					if (temp.size() >= 3 && String::startsWith(temp, "$.")) { // cf) @$. ?
-					//result = result + temp + " ";
-					builder->Append(temp.c_str(), temp.size());
-					builder->Append(" ", 1);
-					}
-					else if (temp.size() >= 12 && String::startsWith(temp, "$parameter.") || (temp.size()) >= 13 && String::startsWith(temp, "@$parameter.")) {
-					//result = result + temp + " ";
-					builder->Append(temp.c_str(), temp.size());
-					builder->Append(" ", 1);
-					}
-					else if (temp.size() >= 8 && String::startsWith(temp, "$local.") || (temp.size()>=9 && String::startsWith(temp, "@$local."))) {
-					//result = result + temp + " ";
-					builder->Append(temp.c_str(), temp.size());
-					builder->Append(" ", 1);
-					}
-					else if (
-					(temp.size() >= 3 && temp[0] == '@' && temp[1] == '$')) { // chk - removal??
-					++i; // tokenizer.nextToken(); // =
-					++i;
-					WIZ_STRING_TYPE temp2 = strVec[i]; //tokenizer.nextToken(); // " ~~ "
-					//result = result + temp + " = { " + temp2 + " } ";
-
-					builder->Append(temp.c_str() + 1, temp.size());
-					builder->Append(" = { ", 5);
-
-					builder->Append(temp2.c_str(), temp2.size());
-					builder->Append(" } ", 3);
-					}
-					else
-					*/
-					{
-						//result = result + temp + " "; 
-						// temp -> strVec
-						builder->Append(operandStack[i].ToString().c_str(), operandStack[i].ToString().size());
-						builder->Append(" ", 1);
-					}
+					_temp = _ToBool4(now, global, *temp.GetUserTypeList(user_count), excuteData);
+					result += _temp;
+					user_count++;
 				}
 			}
-			result = std::string(builder->Str(), builder->Size());
-			if (!result.empty()) {
-				result.erase(result.begin() + result.size() - 1);
-			}
-			/*
 
-			{ // removal?? -why?? - reason?
-			UserType ut;
-			LoadData::LoadDataFromString(result, ut);
-
-			for (int i = 0; i < ut.GetItemListSize(); ++i) {
-			if (utNames.find(ut.GetItemList(i).GetName()) != utNames.end()) {
-			UserType temp(ut.GetItemList(i).GetName());
-			temp.AddItem("", ut.GetItemList(i).Get(0));
-			ut.AddUserTypeItem(move(temp));
-			ut.RemoveItemList(i);
-			--i;
-			}
-			}
-
-			result = ut.ToString();
-			}
-
-			{ // chk.. - removal?
-			for (auto x = excuteData.info.parameters.rbegin(); x != excuteData.info.parameters.rend(); ++x) {
-			WIZ_STRING_TYPE temp;
-			Utility::ChangeStr(result, { "$parameter." + x->first }, { x->second }, temp);
-			result = move(temp);
-			}
-			for (auto x = excuteData.info.locals.rbegin(); x != excuteData.info.locals.rend(); ++x) {
-			WIZ_STRING_TYPE temp;
-			Utility::ChangeStr(result, { "$local." + x->first }, { x->second }, temp);
-			result = move(temp);
-			}
-			}
-			*/
-			//	cout << "result is " << result << endl;
-			//	cout << endl;
-			return std::move(result);
+			return result;
 		}
+		WIZ_STRING_TYPE LoadData::_ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const wiz::load_data::UserType& temp, const ExecuteData& excuteData)
+		{
+			WIZ_STRING_TYPE result, _temp;
+			size_t user_count = 0;
+			size_t item_count = 0;
+			ArrayStack<WIZ_STRING_TYPE> operandStack;
+
+			for (size_t i = 0; i < temp.GetIListSize(); ++i) {
+				if (i > 0) {
+					result += " ";
+				}
+				if (temp.IsItemList(i)) {
+					_temp = ToBool4(now, global, temp.GetItemList(item_count), excuteData);
+					result += _temp;
+					operandStack.push(_temp);
+					item_count++;
+				}
+				else {
+					_temp = _ToBool4(now, global, *temp.GetUserTypeList(user_count), excuteData);
+					result += _temp;
+					operandStack.push(_temp);
+					user_count++;
+				}
+			}
+
+			//std::cout << temp.GetName() << " ";
+			//for (int i = 0; i < operandStack.size(); ++i) {
+				//std::cout << operandStack[i] << " ";
+			//}
+			//std::cout << "\n";
+			if (String::startsWith(temp.GetName().ToString(), "$") && temp.GetName().ToString().size() > 1) {
+				wiz::ArrayStack<WIZ_STRING_TYPE> _stack;
+
+				while (operandStack.empty() == false) {
+					_stack.push(operandStack.pop());
+				}
+
+				if (!operation(now, global, temp.GetName(), _stack, excuteData)) {
+					wiz::Out << "operation ERROR";
+				}
+
+				result = _stack.top();
+			}
+			//std::cout << "result is " << result << "\n";
+			return result;
+		}
+
+		WIZ_STRING_TYPE LoadData::ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& temp, const ExecuteData& excuteData)
+		{
+			WIZ_STRING_TYPE result;
+			if (temp.GetName().empty() == false) {
+				result += temp.GetName() + " = ";
+			}
+
+			auto tokens = tokenize(temp.Get().ToString(), '/');
+
+			if (tokens.size() <= 1) {
+				return result + ToBool4(now, global, temp.Get().ToString(), excuteData);
+			}
+			
+			WIZ_STRING_TYPE _result = "/";
+
+			for (int i = 0; i < tokens.size(); ++i) {
+				WIZ_STRING_TYPE _temp = ToBool4(now, global, tokens[i], excuteData);
+				//std::cout << "chk " << _temp << " ";
+				_result += _temp;
+
+				if (i < tokens.size() - 1) {
+					_result += "/";
+				}
+			}
+			//std::cout << "\n";
+
+			return result + ToBool4(now, global, _result.ToString(), excuteData);
+		}
+
+		WIZ_STRING_TYPE LoadData::ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const std::string& temp, const ExecuteData& excuteData) {
+			std::string result;
+			if (String::startsWith(temp, "$local.")) {
+				if (!(result = FindLocals(excuteData.info.locals, temp)).empty()) {
+					return result;
+				}
+			}
+			else if (String::startsWith(temp, "$parameter.")) {
+				if (!(result = FindParameters(excuteData.info.parameters, temp)).empty()) {
+					return result;
+				}
+			}
+			else if (String::startsWith(temp, "/") && temp.size() > 1) {
+				if (!(result = Find(&global, temp)).empty()) {
+					return result;
+				}
+			}
+			
+			{
+				return temp;
+			}
+		}
+
 	}
 }

@@ -1,791 +1,9 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 
 #include "wiz/ClauText.h"
+using namespace std::literals;
 
 namespace wiz {
-
-
-void ClauText::MStyleTest(wiz::load_data::UserType* pUt)
-{
-#ifdef _MSC_VER
-	wiz::StringBuilder builder(1024);
-	std::vector<wiz::load_data::ItemType<wiz::load_data::UserType*>> utVec;
-	std::vector<MData> mdVec;
-	//std::vector<vector<MData>> mdVec2;
-	wiz::load_data::ItemType<wiz::load_data::UserType*> global;
-	wiz::load_data::UserType* utTemp = pUt;
-	std::vector<wiz::load_data::UserType*> utVec2;
-	std::vector<int> idxVec; //for store before idx
-	std::vector<std::string> strVec; // for value..
-	int braceNum = 0;
-	int idx = 0;
-	bool isFirst = true;
-	bool isReDraw = true;
-	int sizeOfWindow = 30;
-	size_t Start = 0;
-	size_t End = 0;
-	int state = 0;
-
-	global.Push(utTemp);
-
-	utVec.push_back(global);
-
-	utVec2.push_back(utTemp);
-
-	system("cls");
-
-	int count_userType = 0;
-	int count_item = 0;
-
-	while (true) {
-		if (isFirst) {
-			mdVec = std::vector<MData>();
-			count_userType = 0;
-			count_item = 0;
-
-			for (int h = 0; h < utVec[braceNum].size(); ++h) {
-				for (int i = 0; i < utVec[braceNum].Get(h)->GetUserTypeListSize(); ++i) {
-					MData mdTemp{ true, wiz::ToString(utVec[braceNum].Get(h)->GetUserTypeList(i)->GetName()), h };
-					if (mdTemp.varName.empty()) {
-						mdTemp.varName = " ";
-					}
-
-					mdVec.push_back(mdTemp);
-					count_userType++;
-				}
-			}
-			for (int h = 0; h < utVec[braceNum].size(); ++h) {
-				for (int i = 0; i < utVec[braceNum].Get(h)->GetItemListSize(); ++i) {
-					MData mdTemp{ false, wiz::ToString(utVec[braceNum].Get(h)->GetItemList(i).GetName()), h };
-					if (mdTemp.varName.empty()) {
-						mdTemp.varName = " ";
-					}
-					mdVec.push_back(mdTemp);
-					count_item++;
-				}
-			}
-			isFirst = false;
-		}
-		if (isReDraw) {
-			setcolor(0, 0);
-			system("cls");
-
-			End = std::min(Start + sizeOfWindow - 1, mdVec.size() - 1);
-			if (mdVec.empty()) {
-				End = Start - 1;
-			}
-			// draw mdVec and cursor - chk!!
-			else {
-				for (int i = Start; i <= End; ++i) {
-					if (mdVec[i].isDir) { setcolor(0, 10); }
-					else { setcolor(0, 7); }
-					if (false == mdVec[i].varName.empty()) {
-						std::cout << "  " << mdVec[i].varName;
-					}
-					else
-					{
-						std::cout << "  " << " ";
-					}
-					if (i != mdVec.size() - 1) { std::cout << std::endl; }
-				}
-
-				gotoxy(0, idx - Start);
-
-				setcolor(0, 12);
-				std::cout << "●";
-				setcolor(0, 0);
-				gotoxy(0, 0);
-			}
-
-			isReDraw = false;
-		}
-
-		// move and chk enterkey. - todo!!
-		{
-			FFLUSH();
-			char ch = GETCH();
-			FFLUSH();
-		
-			if ('q' == ch) { return; }
-
-			// todo - add, remove, save
-			if (strVec.empty() && Start <= End && idx > 0 && ('w' == ch || 'W' == ch))
-			{
-				// draw mdVec and cursor - chk!!
-				if (idx == Start) {
-					system("cls");
-
-					int count = 0;
-					int newEnd = Start - 1;
-					int newStart = std::max(0, newEnd - sizeOfWindow + 1);
-
-					Start = newStart; End = newEnd;
-					idx--;
-
-					for (int i = Start; i <= End; ++i) {
-						if (mdVec[i].isDir) { setcolor(0, 10); }
-						else { setcolor(0, 7); }
-						std::cout << "  " << mdVec[i].varName;
-						if (mdVec[i].varName.empty()) { std::cout << " "; }
-						if (i != mdVec.size() - 1) { std::cout << std::endl; }
-						count++;
-					}
-					gotoxy(0, idx - Start);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-				else {
-					gotoxy(0, idx - Start);
-					setcolor(0, 0);
-					std::cout << "  ";
-					idx--;
-
-					gotoxy(0, idx - Start);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-			}
-			else if (
-				strVec.empty() && Start <= End && (idx < mdVec.size() - 1)
-				&& ('s' == ch || 'S' == ch)
-				)
-			{
-				if (idx == End) {
-					system("cls");
-
-					int count = 0;
-					size_t newStart = End + 1;
-					size_t newEnd = std::min(newStart + sizeOfWindow - 1, mdVec.size() - 1);
-
-					Start = newStart; End = newEnd;
-					idx++;
-
-					for (int i = Start; i <= End; ++i) {
-						if (mdVec[i].isDir) { setcolor(0, 10); }
-						else { setcolor(0, 7); }
-						std::cout << "  " << mdVec[i].varName;
-						if (i != mdVec.size() - 1) { std::cout << std::endl; }
-						count++;
-					}
-					gotoxy(0, 0);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-				else {
-					gotoxy(0, idx - Start);
-					setcolor(0, 0);
-					std::cout << "  ";
-					idx++;
-
-					gotoxy(0, idx - Start);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-			}
-			if (!strVec.empty() && Start <= End && idx > 0 && ('w' == ch || 'W' == ch))
-			{
-				// draw mdVec and cursor - chk!!
-				if (idx == Start) {
-					system("cls");
-
-					int count = 0;
-					int newEnd = Start - 1;
-					int newStart = std::max(0, newEnd - sizeOfWindow + 1);
-
-					Start = newStart; End = newEnd;
-					idx--;
-
-					for (int i = Start; i <= End; ++i) {
-						setcolor(0, 7);
-						std::cout << "  " << strVec[i];
-						if (i != strVec.size() - 1) { std::cout << std::endl; }
-						count++;
-					}
-					gotoxy(0, idx - Start);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-				else {
-					gotoxy(0, idx - Start);
-					setcolor(0, 0);
-					std::cout << "  ";
-					idx--;
-
-					gotoxy(0, idx - Start);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-			}
-			else if (
-				!strVec.empty() && Start <= End && (idx < strVec.size() - 1)
-				&& ('s' == ch || 'S' == ch)
-				)
-			{
-				if (idx == End) {
-					setcolor(0, 0);
-					system("cls");
-
-					int count = 0;
-					size_t newStart = End + 1;
-					size_t newEnd = std::min(newStart + sizeOfWindow - 1, strVec.size() - 1);
-
-					Start = newStart; End = newEnd;
-					idx++;
-
-					for (int i = Start; i <= End; ++i) {
-						setcolor(0, 7);
-						std::cout << "  " << strVec[i];
-						if (i != strVec.size() - 1) { std::cout << std::endl; }
-						count++;
-					}
-					gotoxy(0, 0);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-				else {
-					gotoxy(0, idx - Start);
-					setcolor(0, 0);
-					std::cout << "  ";
-					idx++;
-
-					gotoxy(0, idx - Start);
-					setcolor(0, 12);
-					std::cout << "●";
-					setcolor(0, 0);
-				}
-			}
-			else if ('\r' == ch || '\n' == ch) {
-				/// To Do..
-				gotoxy(0, 0);
-				if (count_userType == 0 && count_item == 0)
-				{
-					//
-				}
-				else if (state == 0 && strVec.empty() && idx < count_userType) { // utVec[braceNum].Get(mdVec[idx].no)->GetUserTypeListSize()) {
-					setcolor(0, 0);
-					system("cls");
-
-					// usertypelist
-					braceNum++;
-					idxVec.push_back(idx); /// idx?
-
-					if (braceNum >= utVec.size()) {
-						utVec.push_back(wiz::load_data::ItemType<wiz::load_data::UserType*>());
-						utVec2.push_back(nullptr);
-					}
-
-					wiz::load_data::ItemType< wiz::load_data::UserType*> ref;
-					ref.Push(nullptr);
-					std::string strTemp = mdVec[idxVec[braceNum - 1]].varName;
-					if (strTemp == " " || strTemp == "_")
-					{
-						strTemp = "";
-					}
-
-					if (utVec[braceNum - 1].Get(mdVec[idxVec[braceNum - 1]].no)->GetUserTypeItemRef(idxVec[braceNum - 1], ref.Get(0)))
-					{
-						//
-					}
-					utVec[braceNum] = ref;
-
-					utVec2[braceNum - 1]->GetUserTypeItemRef(idxVec[braceNum - 1], ref.Get(0));
-					utVec2[braceNum] = ref.Get(mdVec[idxVec[braceNum - 1]].no);
-
-					Start = 0;
-					idx = 0;
-					isFirst = true;
-					isReDraw = true;
-				}
-				else
-				{
-					if (
-						!mdVec.empty() &&
-						strVec.empty()
-						)
-					{
-						setcolor(0, 0);
-						system("cls");
-
-						std::string strTemp = mdVec[idx].varName;
-						if (strTemp == " " || strTemp == "_") { strTemp = ""; }
-						const int count = 1; // utVec[braceNum].Get(mdVec[idx].no)->GetItem(strTemp).size();
-						setcolor(0, 7);
-
-						for (int i = 0; i < count; ++i) {
-							setcolor(0, 7);
-
-							auto x = utVec[braceNum].Get(mdVec[idx].no)->GetItemList(idx - count_userType);
-							std::string temp = wiz::ToString(x.Get(0));
-							std::cout << "  " << temp;
-							strVec.push_back(temp);
-							//}
-							if (i != count - 1) { std::cout << std::endl; }
-						}
-					}
-
-					if (state == 0) {
-						gotoxy(0, 0);
-						state = 1;
-
-						idxVec.push_back(idx);
-
-						idx = 0;
-						Start = 0;
-
-						setcolor(0, 12);
-						std::cout << "●";
-						setcolor(0, 0);
-					}
-					else if (state == 1) { /// cf) state = 2;
-						gotoxy(0, idx); /// chk..
-						Start = idx;
-					}
-
-
-					// idx = 0;
-					End = std::min(Start + sizeOfWindow - 1, strVec.size() - 1);
-					if (strVec.empty()) { End = Start - 1; }
-
-
-					// chk
-					count_userType = 0;
-					count_item = 1;
-				}
-			}
-			else if (0 == state && 'f' == ch)
-			{
-				std::string temp;
-				int x = 0;
-				system("cls");
-				setcolor(0, 7);
-				std::cout << "row input : ";
-				std::cin >> temp;
-				FFLUSH();
-
-				if (wiz::load_data::Utility::IsInteger(temp)) {
-					x = stoi(temp); // toInt
-					if (x < 0) { x = 0; }
-					else if (x >= mdVec.size()) {
-						x = mdVec.size() - 1;
-					}
-
-					// chk!! ToDo ?
-					idx = x;
-					x = std::max(0, x - sizeOfWindow / 2);
-					Start = x;
-					isReDraw = true; /// chk!! To Do - OnlyRedraw? Reset? // int + changed?
-				}
-				else
-				{
-					isReDraw = true; /// OnlyDraw = true?, no search?
-				}
-			}
-			else if (0 == state && '1' == ch)
-			{
-				int index = idx;
-				std::string temp = mdVec[idx].varName;
-
-				for (int i = idx - 1; i >= 0; --i) {
-					if (mdVec[i].varName == temp) {
-						index = i;
-					}
-					else
-					{
-						break;
-					}
-				}
-
-				idx = index;
-				Start = std::max(0, idx - sizeOfWindow / 2);
-				isReDraw = true;
-			}
-			else if (0 == state && '2' == ch)
-			{
-				int index = idx;
-				std::string temp = mdVec[idx].varName;
-
-				for (int i = idx + 1; i < mdVec.size(); ++i) {
-					if (mdVec[i].varName == temp) {
-						index = i;
-					}
-					else
-					{
-						break;
-					}
-				}
-
-				idx = index;
-				Start = std::max(0, idx - sizeOfWindow / 2);
-				isReDraw = true;
-
-			}
-			else {
-				if ('q' == ch) { return; } // quit
-				else if ('b' == ch && braceNum > 0 && strVec.empty() && state == 0) {  // back
-					braceNum--;
-
-					setcolor(0, 0);
-					system("cls");
-
-					isFirst = true;
-					isReDraw = true;
-					//Start = idxVec.back();
-
-					idx = idxVec.back();
-					idxVec.pop_back();
-
-					if (0 <= idx - sizeOfWindow / 2)
-					{
-						Start = idx - sizeOfWindow / 2;
-					}
-					else {
-						Start = 0;
-					}
-				}
-				else if ('b' == ch && !idxVec.empty()) /// state == 1 ?
-				{
-					idx = idxVec.back();
-					idxVec.pop_back();
-
-					if (0 <= idx - sizeOfWindow / 2)
-					{
-						Start = idx - sizeOfWindow / 2;
-					}
-					else {
-						Start = 0;
-					}
-
-					state = 0;
-					setcolor(0, 0);
-					system("cls");
-					strVec.clear();
-
-					isFirst = true;
-					isReDraw = true;
-				}
-				else if ('e' == ch) {
-					setcolor(0, 0);
-					system("cls");
-					setcolor(7, 0);
-
-					std::cout << "edit mode" << std::endl;
-					std::cout << "add - a, change - c, remove - r, save - s" << std::endl;
-					
-					//GETCH(); // why '\0' or 0?
-					ch = GETCH();
-					FFLUSH();
-
-					if ('a' == ch) { // add
-						int select = -1;
-						std::string var;
-						std::string val;
-
-						setcolor(0, 7);
-						// need more test!!
-						std::cout << "add UserType : 1, add Item : 2, add usertype that name is \"\": 3 your input : ";
-						std::cin >> select;
-						FFLUSH();
-
-						// add userType?
-						if (1 == select) {
-							// name of UserType.
-							std::cout << "what is new UserType name? : ";
-							std::cin >> var;
-							FFLUSH();
-							utVec2[braceNum]->AddUserTypeItem(wiz::load_data::UserType(var));
-						}
-						// addd Item?
-						else if (2 == select) {
-							// var, val /// state에 따라?
-							std::cout << "var : ";
-							std::cin >> var;
-							std::cout << "val : ";
-							FFLUSH();
-							std::getline(std::cin, val);
-							utVec2[braceNum]->AddItem(var, val);
-						}
-						else if (3 == select)
-						{
-							utVec2[braceNum]->AddUserTypeItem(wiz::load_data::UserType(""));
-						}
-					}
-					else if ('c' == ch && Start <= End) { // change var or value
-														  // idx
-						if (idx < count_userType) {
-							std::string temp;
-							setcolor(0, 7);
-							std::cout << "change userType name : ";
-
-							FFLUSH();
-							std::getline(std::cin, temp);
-
-							int count = 0;
-							for (int h = 0; h < utVec[braceNum].size(); ++h) {
-								for (int i = 0; i < utVec[braceNum].Get(h)->GetUserTypeListSize(); ++i) {
-									if (count == idx) {
-										utVec[braceNum].Get(h)->GetUserTypeList(i)->SetName(temp);
-									}
-									count++;
-								}
-							}
-						}
-						else {
-							std::string temp;
-							setcolor(0, 7);
-
-							std::string name, value;
-							if (1 == state) { // val
-								std::cout << "change val : " << std::endl;
-								std::getline(std::cin, temp);
-
-								value = temp;
-
-								int count = 0;
-								count_userType = 0; // int ~ ?
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetUserTypeListSize(); ++i) {
-										count++;
-										count_userType++;
-									}
-								}
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetItemListSize(); ++i) {
-										if (idxVec.back() == count) {
-											utVec[braceNum].Get(h)->GetItemList(i).Get(idx) = value;
-										}
-										count++;
-									}
-								}
-								idx = idxVec.back();
-								idxVec.pop_back();
-								// max!
-								if (0 <= idx - sizeOfWindow / 2)
-								{
-									Start = idx - sizeOfWindow / 2;
-								}
-								else {
-									Start = 0;
-								}
-								strVec.clear();
-								state = 0;
-							}
-							else if (0 == state) { // var
-								std::cout << "change var : " << std::endl;
-								std::cin >> temp;
-								FFLUSH();
-								name = temp;
-								int count = 0;
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetUserTypeListSize(); ++i) {
-										count++;
-									}
-								}
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetItemListSize(); ++i) {
-										if (idx == count) {
-											utVec[braceNum].Get(h)->GetItemList(i).SetName(name);
-										}
-										count++;
-									}
-								}
-							}
-						}
-					}
-					else if ('r' == ch && Start <= End) { // remove
-						if (idx < count_userType)
-						{
-							int count = 0;
-							for (int h = 0; h < utVec[braceNum].size(); ++h) {
-								for (int i = 0; i < utVec[braceNum].Get(h)->GetUserTypeListSize(); ++i) {
-									if (count == idx) {
-										std::string temp = mdVec[idx].varName;
-										if (temp == " " || temp == "_") {
-											temp = "";
-										}
-										utVec[braceNum].Get(h)->RemoveUserTypeList(temp);
-									}
-									count++;
-								}
-							}
-							idx = 0;
-							Start = 0;
-						}
-						else {
-							if (state == 0) {
-								int count = 0;
-								int count_ut = 0;
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetUserTypeListSize(); ++i) {
-										count++;
-										count_ut++;
-									}
-								}
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetItemListSize(); ++i) {
-										if (count == idx) {
-											std::string temp = mdVec[idx].varName;
-											if (temp == " " || temp == "_") { temp = ""; }
-
-											utVec[braceNum].Get(h)->RemoveItemList(temp);
-										}
-										count++;
-									}
-								}
-								idx = 0;
-								Start = 0;
-							}
-							else if (1 == state)
-							{
-								int count = 0;
-								int count_ut = 0;
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetUserTypeListSize(); ++i) {
-										count++;
-										count_ut++;
-									}
-								}
-								for (int h = 0; h < utVec[braceNum].size(); ++h) {
-									for (int i = 0; i < utVec[braceNum].Get(h)->GetItemListSize(); ++i) {
-										if (count == idxVec.back()) {
-											utVec[braceNum].Get(h)->GetItemList(count - count_ut).Remove(0);
-											if (utVec[braceNum].Get(h)->GetItemList(count - count_ut).size() == 0) {
-												utVec[braceNum].Get(h)->GetItemList(count - count_ut).Remove();
-												utVec[braceNum].Get(h)->RemoveEmptyItem();
-											}
-										}
-										count++;
-									}
-								}
-
-								idxVec.pop_back();
-								idx = 0;
-								// max!
-								if (0 <= idx - sizeOfWindow / 2)
-								{
-									Start = idx - sizeOfWindow / 2;
-								}
-								else {
-									Start = 0;
-								}
-								strVec.clear();
-								state = 0;
-							}
-						}
-					}
-					else if ('s' == ch) { // save total data.
-						std::string temp;
-
-						setcolor(0, 7);
-						std::cout << "save file name : ";
-						FFLUSH();
-						std::getline(std::cin, temp);
-
-						wiz::load_data::LoadData::SaveWizDB(*utTemp, temp, "1");
-					}
-
-					if (1 == state)
-					{
-						idxVec.back();
-						idxVec.pop_back();
-						idx = 0;
-						// max!
-						if (0 <= idx - sizeOfWindow / 2)
-						{
-							Start = idx - sizeOfWindow / 2;
-						}
-						else {
-							Start = 0;
-						}
-						strVec.clear();
-						state = 0;
-					}
-
-					/// else if( l? reload?
-					isFirst = true; // 
-					isReDraw = true; //
-				}
-				else if ('t' == ch && braceNum == 0) { // pass???
-					isFirst = true;
-					isReDraw = true;
-					setcolor(0, 0);
-					system("cls");
-
-					setcolor(7, 0);
-					std::cout << "text edit mode" << std::endl;
-
-					// Add, AddUserType, Set, Remove, RemoveAll ?.
-					std::string temp;
-					FFLUSH();
-					std::getline(std::cin, temp);
-
-					wiz::StringTokenizer tokenizer(temp, "|", &builder, 1);
-					std::vector<std::string> strVecTemp;
-
-					while (tokenizer.hasMoreTokens()) {
-						strVecTemp.push_back(tokenizer.nextToken());
-					}
-					if (!strVecTemp.empty()) {
-						try {
-							if ("add" == strVecTemp[0])
-							{
-								if (false == wiz::load_data::LoadData::AddData(*utTemp, strVecTemp[1], strVecTemp[2], strVecTemp[3], ExcuteData(), nullptr))
-								{
-									std::cout << "fail to add" << std::endl; /// To Do to following code.
-								}
-							}
-							else if ("addusertype" == strVecTemp[0])
-							{
-								wiz::load_data::LoadData::AddUserType(*utTemp, strVecTemp[1], strVecTemp[2], strVecTemp[3], strVecTemp[4], ExcuteData(), nullptr);
-							}
-							else if ("set" == strVecTemp[0])
-							{
-								wiz::load_data::LoadData::SetData(*utTemp, strVecTemp[1], strVecTemp[2], strVecTemp[3], strVecTemp[4], ExcuteData(), nullptr);
-							}
-							else if ("remove" == strVecTemp[0])
-							{
-								wiz::load_data::LoadData::Remove(*utTemp, strVecTemp[1], strVecTemp[2], strVecTemp[3], ExcuteData(), nullptr);
-							}
-							//else if ("removenonameitem" == strVecTemp[0])
-							//{
-							//	wiz::load_data::LoadData::RemoveNoNameItem(*utTemp, strVecTemp[1], strVecTemp[2]);
-							//}
-							else if ("removeall" == strVecTemp[0])
-							{
-								wiz::load_data::LoadData::Remove(*utTemp, strVecTemp[1], strVecTemp[2], ExcuteData(), nullptr);
-							}
-							else if ("searchitem" == strVecTemp[0])
-							{
-								std::cout << wiz::load_data::LoadData::SearchItem(*utTemp, strVecTemp[1], strVecTemp[2], ExcuteData(), nullptr) << std::endl;
-								GETCH();
-							}
-							else if ("searchusertype" == strVecTemp[0])
-							{
-								std::cout << wiz::load_data::LoadData::SearchUserType(*utTemp, strVecTemp[1], strVecTemp[2], ExcuteData(), nullptr) << std::endl;
-								GETCH();
-							}
-						}
-						catch (std::exception& e) {}
-						catch (wiz::Error& e) {}
-						catch (const char* e) {}
-						catch (const std::string& e) {}
-					}
-					//
-					idx = 0;
-					Start = 0;
-				}
-			}
-		}
-	}
-#endif
-}
-
 
 template <class T> // T has clear method, default constructor.
 class Node
@@ -809,24 +27,24 @@ public:
 	}
 };
 
-std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::UserType* _global, const ExcuteData& excuteData, Option& opt, int chk)
+std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::UserType* _global, const ExecuteData& excuteData, Option& opt, int chk)
 {
-	wiz::ArrayMap<std::string, std::pair<std::vector<std::string>, bool>>* __map = opt._map;
-	opt._map = Node<wiz::ArrayMap<std::string, std::pair<std::vector<std::string>, bool>>>::f(__map);
-	wiz::ArrayMap<std::string, std::pair<std::vector<std::string>, bool>>& _map = *opt._map;
+	wiz::Map2<std::string, std::pair<std::vector<std::string>, bool>>* __map = opt._map;
+	opt._map = Node<wiz::Map2<std::string, std::pair<std::vector<std::string>, bool>>>::f(__map);
+	wiz::Map2<std::string, std::pair<std::vector<std::string>, bool>>& _map = *opt._map;
 																		   //
 	wiz::load_data::UserType& global = *_global;
 	//std::vector<std::thread*> waits;
-	wiz::ArrayMap<std::string, wiz::load_data::UserType>* _objectMap = opt.objectMap;
-	opt.objectMap = Node<wiz::ArrayMap<std::string, wiz::load_data::UserType>>::f(_objectMap);
-	wiz::ArrayMap<std::string, wiz::load_data::UserType>& objectMap = *opt.objectMap;
+	wiz::Map2<std::string, wiz::load_data::UserType>* _objectMap = opt.objectMap;
+	opt.objectMap = Node<wiz::Map2<std::string, wiz::load_data::UserType>>::f(_objectMap);
+	wiz::Map2<std::string, wiz::load_data::UserType>& objectMap = *opt.objectMap;
 
-	wiz::ArrayMap<std::string, wiz::load_data::UserType>* _moduleMap = opt.moduleMap;
-	opt.moduleMap = Node<wiz::ArrayMap<std::string, wiz::load_data::UserType>>::f(_moduleMap);
-	wiz::ArrayMap<std::string, wiz::load_data::UserType>& moduleMap = *opt.moduleMap;
+	wiz::Map2<std::string, wiz::load_data::UserType>* _moduleMap = opt.moduleMap;
+	opt.moduleMap = Node<wiz::Map2<std::string, wiz::load_data::UserType>>::f(_moduleMap);
+	wiz::Map2<std::string, wiz::load_data::UserType>& moduleMap = *opt.moduleMap;
 
-	wiz::ArrayMap<std::string, wiz::load_data::UserType>* objectMapPtr = nullptr;
-	wiz::ArrayMap<std::string, wiz::load_data::UserType>* moduleMapPtr = nullptr;
+	wiz::Map2<std::string, wiz::load_data::UserType>* objectMapPtr = nullptr;
+	wiz::Map2<std::string, wiz::load_data::UserType>* moduleMapPtr = nullptr;
 
 	std::string* _module_value = opt.module_value;
 	opt.module_value = Node<std::string>::f(_module_value);
@@ -837,9 +55,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 	opt.eventStack = Node<wiz::ArrayStack<EventInfo>>::f(_eventStack);
 	wiz::ArrayStack<EventInfo>& eventStack = *opt.eventStack;
 
-	wiz::ArrayMap<std::string, int>* _convert = opt.convert;
-	opt.convert = Node<wiz::ArrayMap<std::string, int>>::f(_convert);
-	wiz::ArrayMap<std::string, int>& convert = *opt.convert;
+	wiz::Map2<std::string, int>* _convert = opt.convert;
+	opt.convert = Node<wiz::Map2<std::string, int>>::f(_convert);
+	wiz::Map2<std::string, int>& convert = *opt.convert;
 
 	std::vector<wiz::load_data::UserType*>* __events = opt._events;
 	opt._events = Node<std::vector<wiz::load_data::UserType*>>::f(__events);
@@ -855,16 +73,12 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 	opt.Main = Node<wiz::load_data::UserType>::f(_Main);
 	wiz::load_data::UserType& Main = *opt.Main;
 	
-	wiz::StringBuilder* _builder = opt.builder;
-	opt.builder = Node<wiz::StringBuilder>::f(_builder);
-	wiz::StringBuilder& builder = *opt.builder;
-	
 
 	// start from Main.
 	if (excuteData.chkInfo == false) { /// chk smartpointer.
 		if (global.GetUserTypeItem("Main").empty() && MainStr.empty())
 		{
-			std::cout << "do not exist Main" << std::endl;
+			wiz::Out << "do not exist Main" << ENTER;
 			return "ERROR -1";
 		}
 
@@ -891,7 +105,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 		eventStack.push(info);
 
-		// $load_only_data - sequential?
+		// $load_only_data 
 		{
 			wiz::load_data::UserType* val = nullptr;
 			auto x = info.eventUT->GetUserTypeItem("$load_only_data");
@@ -900,7 +114,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					val = x[i];
 
 					wiz::load_data::UserType ut;
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), ExcuteData(), &builder);
+					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), ExecuteData()).ToString();
 					fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
 					std::string dirName = val->GetUserTypeList(1)->ToString();
 					wiz::load_data::UserType* utTemp;
@@ -909,7 +123,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						utTemp = &global;
 					}
 					else {
-						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, dirName, ExcuteData(), &builder);
+						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), ExecuteData()).ToString();
 						utTemp = global.GetUserTypeItem(dirName)[0];
 					}
 
@@ -944,84 +158,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						//	if (!_Main.empty())
 						//	{
 						// error!
-						//		std::cout << "err" << std::endl;
-
-						//			return "ERROR -2"; /// exit?
-						//		}
-					}
-					else {
-						// error!
-					}
-				}
-			}
-		}
-
-		// $load_only_data2 - parallel
-		{
-			wiz::load_data::UserType* val = nullptr;
-			auto x = info.eventUT->GetUserTypeItem("$load_only_data2");
-			if (!x.empty()) {
-				for (int i = 0; i < x.size(); ++i) {
-					val = x[i];
-
-					wiz::load_data::UserType ut;
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), ExcuteData(), &builder);
-					fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
-					std::string dirName = val->GetUserTypeList(1)->ToString();
-					wiz::load_data::UserType* utTemp;
-
-
-					if (dirName == "/./" || dirName == "root") {
-						utTemp = &global;
-					}
-					else {
-						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, dirName, ExcuteData(), &builder);
-						utTemp = global.GetUserTypeItem(dirName)[0];
-					}
-
-					std::string option;
-
-					if (val->GetUserTypeListSize() >= 3) {
-						option = val->GetUserTypeList(2)->ToString();
-					}
-
-					int lex_thr_num = 4;
-					int parse_thr_num = 4;
-
-					if (val->GetUserTypeListSize() >= 3) {
-						lex_thr_num = stoi(val->GetUserTypeList(2)->ToString());
-					}
-					if (val->GetUserTypeListSize() >= 4) {
-						parse_thr_num = stoi(val->GetUserTypeList(3)->ToString());
-					}
-
-
-					if (wiz::load_data::LoadData::LoadDataFromFile3(fileName, ut, parse_thr_num - 1, lex_thr_num)) {
-						{
-							for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-								utTemp->PushComment(std::move(ut.GetCommentList(i)));
-							}
-							int item_count = 0;
-							int userType_count = 0;
-
-							for (int i = 0; i < ut.GetIListSize(); ++i) {
-								if (ut.IsItemList(i)) {
-									utTemp->AddItem(std::move(ut.GetItemList(item_count).GetName()),
-										std::move(ut.GetItemList(item_count).Get(0)));
-									item_count++;
-								}
-								else {
-									utTemp->AddUserTypeItem(std::move(*ut.GetUserTypeList(userType_count)));
-									userType_count++;
-								}
-							}
-						}
-
-						//	auto _Main = ut.GetUserTypeItem("Main");
-						//	if (!_Main.empty())
-						//	{
-						// error!
-						//		std::cout << "err" << std::endl;
+						//		wiz::Out << "err" << ENTER;
 
 						//			return "ERROR -2"; /// exit?
 						//		}
@@ -1065,7 +202,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 		{
 			auto x = eventPtr->GetUserTypeList(i)->GetItem("id");
 			if (!x.empty()) {
-				//std::cout <<	x[0] << std::endl;
+				//wiz::Out <<	x[0] << ENTER;
 				auto temp = std::pair<std::string, int>(wiz::ToString(x[0].Get(0)), i);
 				convert.insert(temp);
 			}
@@ -1100,7 +237,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 		wiz::ArrayMap<std::string, std::string>::iterator x;
 		for (int i = 0; i < info.parameters.size(); ++i) {
 			if ((x = info.parameters.find("id")) != info.parameters.end()) {
-				str = x->key.second;
+				str = x->second;
 				break;
 			}
 		}
@@ -1180,144 +317,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 			while (val != nullptr)
 			{
-				// ToDo -$filter, $map, $reduce?
-				// list = { base_tax } // /root/ X , root/ O
-				// $filter = { utDir = { /./test } 
-				// condition = { AND = { EXSITITEMBYVAL = { base_tax root/list } COMP> = { ~~ / 5.000 ~ 0 } } } 
-				// recursive = { false or true } } // return UserType.?
-				/** it has bug?
-				if ("$for_each" == val->GetName()) {
-				ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-				_excuteData.chkInfo = true;
-				_excuteData.info = eventStack.top();
-				_excuteData.pObjectMap = objectMapPtr;
-				_excuteData.pEvents = eventPtr;
-				_excuteData.pModule = moduleMapPtr;
-
-				const std::string eventID = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-				const std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-				const std::string condition = val->GetUserTypeList(2)->ToString();
-
-				wiz::load_data::UserType* event = nullptr;
-				std::string parameter = "id = " + eventID + " ";
-				// find event
-				{
-				for (int i = 0; i < eventPtr->GetUserTypeListSize(); ++i) {
-				if (eventID == eventPtr->GetUserTypeList(i)->GetItem("id")[0].Get(9)) {
-				event = eventPtr->GetUserTypeList(i);
-				break;
-				}
-				}
-				}
-				// find parameter and validate?
-				bool pass = false;
-				{
-				for (int i = 0; i < event->GetUserTypeListSize(); ++i) {
-				if ("$parameter" == event->GetUserTypeList(i)->GetName()) {
-				if (1 == event->GetUserTypeList(i)->GetItemListSize()) {
-				parameter = parameter + event->GetUserTypeList(i)->GetItemList(0).Get(0);
-				}
-				else {
-				pass = true;
-				break;
-				}
-				break;
-				}
-				}
-				}
-				if (pass) {
-				eventStack.top().userType_idx.top()++;
-				break;
-				}
-				// chk loop and condition! chk do not use ""
-				{
-				int count = 0;
-				eventStack.top().return_value = "";
-				wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, dir, &builder).second[0];
-				for (int i = 0; i < ut->GetItemListSize(); ++i) {
-				std::string _condition = condition;
-
-				_condition = wiz::String::replace(_condition, "~~~", ut->GetItemList(i).Get(0)); //
-				_condition = wiz::String::replace(_condition, "////", dir);
-				_condition = wiz::String::replace(_condition, "///", wiz::_toString(i));
-				// ToDo - chk : empty name!!
-				if (ut->GetItemList(i).GetName().empty()) {
-				_condition = wiz::String::replace(_condition, "~~", "^"); // chk..
-				}
-				else
-				{
-				_condition = wiz::String::replace(_condition, "~~", ut->GetItemList(i).GetName());
-				}
-
-				_condition = wiz::load_data::LoadData::ToBool4(ut, global, _condition, _excuteData, &builder);
-
-				wiz::load_data::Condition _cond(_condition, ut, &global, &builder);
-
-				while (_cond.Next());
-
-				if (_cond.Now().size() != 1 || "TRUE" != _cond.Now()[0]) // || cond.Now().size()  != 1
-				{
-				//std::std::cout << cond.Now()[0] << std::endl;
-				continue;
-				}
-
-
-				wiz::load_data::UserType eventsTemp = events;
-
-				ExcuteData _excuteData;
-				_excuteData.depth = excuteData.depth;
-				_excuteData.pEvents = &eventsTemp;
-				_excuteData.pModule = moduleMapPtr;
-				_excuteData.pObjectMap = objectMapPtr;
-				_excuteData.noUseInput = excuteData.noUseInput;
-				_excuteData.noUseOutput = excuteData.noUseOutput;
-
-				wiz::load_data::LoadData::AddData(eventsTemp, "/root", "Event = { id = NONE $call = { " + parameter + " = { " + ut->GetItemList(i).ToString() + " } } }", "TRUE", _excuteData, &builder);
-
-				const std::string return_value = excute_module("Main = { $call = { id = NONE } }", &global, _excuteData, opt, 0);
-
-				wiz::load_data::UserType return_value_ut;
-
-				wiz::load_data::LoadData::LoadDataFromString(return_value, return_value_ut);
-
-				ut->GetItemList(i).SetName(return_value_ut.GetItemList(0).GetName());
-				ut->GetItemList(i).Set(0, return_value_ut.GetItemList(0).Get(0));
-
-				if (count != 0) {
-				eventStack.top().return_value = eventStack.top().return_value + " ";
-				}
-
-				eventStack.top().return_value = eventStack.top().return_value + return_value;
-
-				count++;
-				}
-				}
-
-				eventStack.top().userType_idx.top()++;
-				break;
-				}
-				else
-				*/
-				if ("$cond" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string cond = val->ToString();
-
-
-					cond = wiz::load_data::LoadData::DoCondition(global, cond, _excuteData, &builder);
-
-					eventStack[eventStack.size() - 1].return_value = cond;
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$copy" == val->GetName()) { // to = { } from = { } option = { 1 : internal data, default, 2 : total data }
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				if ("$copy"sv == val->GetName()) { // to = { } from = { } option = { 1 : internal data, default, 2 : total data }
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1332,11 +333,11 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						option = val->GetUserTypeList(2)->ToString();
 					}
 
-					wiz::load_data::UserType* to_ut = wiz::load_data::UserType::Find(&global, to, &builder).second[0];
-					wiz::load_data::UserType* from_ut = wiz::load_data::UserType::Find(&global, from, &builder).second[0];
+					wiz::load_data::UserType* to_ut = wiz::load_data::UserType::Find(&global, to).second[0];
+					wiz::load_data::UserType* from_ut = wiz::load_data::UserType::Find(&global, from).second[0];
 
 					if (to_ut == from_ut) {
-						std::cout << "to_ut == from_ut\n";
+						wiz::Out << "to_ut == from_ut\n";
 
 						eventStack.top().userType_idx.top()++;
 						break;
@@ -1346,7 +347,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						int utCount = 0;
 						for (int i = 0; i < from_ut->GetIListSize(); ++i) {
 							if (from_ut->IsItemList(i)) {
-								to_ut->AddItemList(from_ut->GetItemList(itCount));
+								to_ut->AddItemType(from_ut->GetItemList(itCount));
 								itCount++;
 							}
 							else {
@@ -1362,8 +363,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$iterate" == val->GetName()) { // very slow? why??
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$iterate"sv == val->GetName()) { // very slow? why??
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1381,22 +382,54 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					if (val->GetUserTypeListSize() >= 3) {
 						recursive = val->GetUserTypeList(2)->ToString();
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, recursive, _excuteData, &builder);
+						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 					}
 
 					std::string before_value;
 
 					if (val->GetUserTypeListSize() >= 4) {
-						before_value = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(3)->ToString(), _excuteData, &builder);
+						before_value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(3), _excuteData).ToString();
 					}
-					wiz::load_data::LoadData::Iterate(global, dir, events, recursive, before_value, _excuteData, &builder);
+					wiz::load_data::LoadData::Iterate(global, dir, events, recursive, before_value, _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$iterate2" == val->GetName()) { // very slow? why??
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$iterateA"sv == val->GetName()) { // very slow? why??
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
+					_excuteData.chkInfo = true;
+					_excuteData.info = eventStack.top();
+					_excuteData.pObjectMap = objectMapPtr;
+					_excuteData.pEvents = eventPtr;
+					_excuteData.pModule = moduleMapPtr;
+
+					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					std::vector<std::string> events; // event_ids
+
+					for (int i = 0; i < val->GetUserTypeList(1)->GetItemListSize(); ++i) {
+						events.push_back(wiz::ToString(val->GetUserTypeList(1)->GetItemList(i).Get(0)));
+					}
+
+					std::string recursive = "FALSE";
+
+					if (val->GetUserTypeListSize() >= 3) {
+						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
+					}
+
+					std::string before_value;
+
+					if (val->GetUserTypeListSize() >= 4) {
+						before_value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(3), _excuteData).ToString();
+					}
+					wiz::load_data::LoadData::Iterate(global, dir, events, recursive, before_value, _excuteData);
+
+
+					eventStack.top().userType_idx.top()++;
+					break;
+				}
+				else if ("$iterate2"sv == val->GetName()) { // very slow? why??
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1413,17 +446,49 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					std::string recursive = "FALSE";
 
 					if (val->GetUserTypeListSize() >= 3) {
-						recursive = val->GetUserTypeList(2)->ToString();
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, recursive, _excuteData, &builder);
+						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 					}
-					wiz::load_data::LoadData::Iterate2(global, dir, events, recursive, _excuteData, &builder);
+					wiz::load_data::LoadData::Iterate2(global, dir, events, recursive, _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$riterate" == val->GetName()) { // very slow? why??
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$iterate3"sv == val->GetName()) { //
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
+					_excuteData.chkInfo = true;
+					_excuteData.info = eventStack.top();
+					_excuteData.pObjectMap = objectMapPtr;
+					_excuteData.pEvents = eventPtr;
+					_excuteData.pModule = moduleMapPtr;
+
+					std::string dir = val->GetUserTypeList(0)->ToString();
+					std::string name = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
+					std::vector<std::string> events; // event_ids
+
+					for (int i = 0; i < val->GetUserTypeList(2)->GetItemListSize(); ++i) {
+						events.push_back(wiz::ToString(val->GetUserTypeList(2)->GetItemList(i).Get(0)));
+					}
+
+					std::string recursive = "FALSE";
+
+					if (val->GetUserTypeListSize() >= 4) {
+						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(3), _excuteData).ToString();
+					}
+
+					std::string before_value;
+
+					if (val->GetUserTypeListSize() >= 5) {
+						before_value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(4), _excuteData).ToString();
+					}
+					wiz::load_data::LoadData::Iterate3(global, dir, name, events, recursive, before_value, _excuteData);
+
+
+					eventStack.top().userType_idx.top()++;
+					break;
+				}
+				else if ("$riterate"sv == val->GetName()) { // very slow? why??
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1440,24 +505,23 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					std::string recursive = "FALSE";
 
 					if (val->GetUserTypeListSize() >= 3) {
-						recursive = val->GetUserTypeList(2)->ToString();
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, recursive, _excuteData, &builder);
+						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 					}
-					wiz::load_data::LoadData::RIterate(global, dir, events, recursive, _excuteData, &builder);
+					wiz::load_data::LoadData::RIterate(global, dir, events, recursive, _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$while" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$while"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					const std::string condition = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					const std::string condition = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 
 					if ("TRUE" == condition) {
 						eventStack.top().conditionStack.push("TRUE");
@@ -1470,8 +534,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						break;
 					}
 				}
-				else if ("$do" == val->GetName()) { // chk? - need example!
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$do"sv == val->GetName()) { // chk? - need example!
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1484,13 +548,13 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					wiz::load_data::UserType subGlobal;
 					wiz::load_data::LoadData::LoadDataFromString(val->GetUserTypeList(1)->ToString(), subGlobal);
 					wiz::load_data::UserType inputUT;
-					wiz::load_data::LoadData::LoadDataFromString(wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder), inputUT);
+					wiz::load_data::LoadData::LoadDataFromString(wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString(), inputUT);
 
 
-					wiz::load_data::LoadData::AddData(subGlobal, "/./", inputUT.ToString(), "TRUE", _excuteData, &builder);
+					wiz::load_data::LoadData::AddData(subGlobal, "/./", inputUT.ToString(), _excuteData);
 
 					{
-						ExcuteData _excuteData;
+						ExecuteData _excuteData;
 						_excuteData.noUseInput = excuteData.noUseInput;
 						_excuteData.noUseOutput = excuteData.noUseOutput;
 
@@ -1501,185 +565,15 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				// add option! for "".support eu3, eu4.
-				else if ("$replace_datatype1" == val->GetName()) { // name
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$remove_usertype_total"sv == val->GetName()) { //// has bug?
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string rex = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					rex = rex.substr(1, rex.size() - 2);
-					std::vector<std::string> sval;
-					std::vector<std::string> scondition;
-					std::string start_dir = "root";
-
-					if (val->GetUserTypeListSize() >= 3)
-					{
-						const int n = (val->GetUserTypeListSize() - 3); // chk
-						for (int i = 0; i < n; i = i + 2) { // chk
-							sval.push_back(val->GetUserTypeList(1 + i)->ToString());
-
-							scondition.push_back(val->GetUserTypeList(2 + i)->ToString());
-						}
-					}
-					if (val->GetUserTypeListSize() >= 4) {
-						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(val->GetUserTypeListSize() - 2)->ToString(), _excuteData, &builder);
-					}
-					bool recursive = true;
-					if (val->GetUserTypeListSize() >= 5) {
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(val->GetUserTypeListSize() - 1)->ToString(), _excuteData, &builder) == "TRUE" ? true : false;
-					}
-					wiz::load_data::LoadData::ReplaceDataType1(global, rex, sval, scondition, start_dir, _excuteData, recursive, &builder);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$replace_datatype1_2" == val->GetName()) { //val
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string rex = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					rex = rex.substr(1, rex.size() - 2);
-					std::vector<std::string> sval;
-					std::vector<std::string> scondition;
-					std::string start_dir = "root";
-
-					if (val->GetUserTypeListSize() >= 3)
-					{
-						const int n = (val->GetUserTypeListSize() - 3); // chk
-						for (int i = 0; i < n; i = i + 2) { // chk
-							sval.push_back(val->GetUserTypeList(1 + i)->ToString());
-
-							scondition.push_back(val->GetUserTypeList(2 + i)->ToString());
-						}
-					}
-
-					if (val->GetUserTypeListSize() >= 4) {
-						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(val->GetUserTypeListSize() - 2)->ToString(), _excuteData, &builder);
-					}
-					bool recursive = true;
-					if (val->GetUserTypeListSize() >= 5) {
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(val->GetUserTypeListSize() - 1)->ToString(), _excuteData, &builder) == "TRUE" ? true : false;
-					}
-
-					wiz::load_data::LoadData::ReplaceDataType1_2(global, rex, sval, scondition, start_dir, _excuteData, recursive, &builder);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$replace_datatype2" == val->GetName()) { // usertype name
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string rex = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					rex = rex.substr(1, rex.size() - 2);
-					//std::cout << val->GetUserTypeList(1)->ToString() << std::endl;
-					std::vector<std::string> sval;
-					std::vector<std::string> scondition;
-					std::string start_dir = "root";
-
-					if (val->GetUserTypeListSize() >= 3)
-					{
-						const int n = (val->GetUserTypeListSize() - 3); // chk
-						for (int i = 0; i < n; i = i + 2) { // chk
-							sval.push_back(val->GetUserTypeList(1 + i)->ToString());
-
-							scondition.push_back(val->GetUserTypeList(2 + i)->ToString());
-						}
-					}
-
-					if (val->GetUserTypeListSize() >= 4) {
-						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(val->GetUserTypeListSize() - 1)->ToString(), _excuteData, &builder);
-					}
-					bool recursive = true;
-					if (val->GetUserTypeListSize() >= 5) {
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(val->GetUserTypeListSize() - 2)->ToString(), _excuteData, &builder) == "TRUE" ? true : false;
-					}
-					//std::cout << scondition << std::endl;
-					//std::cout << "sval " << sval << std::endl;
-					wiz::load_data::LoadData::ReplaceDataType2(global, rex, sval, scondition, start_dir, _excuteData, recursive, &builder);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$replace_datetype" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string sval = val->GetUserTypeList(0)->ToString();
-
-					std::string scondition = "TRUE";
-					std::string start_dir = "root";
-
-					if (val->GetUserTypeListSize() >= 2)
-					{
-						scondition = val->GetUserTypeList(1)->ToString();
-					}
-					if (val->GetUserTypeListSize() >= 3) {
-						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(2)->ToString(), _excuteData, &builder);
-					}
-					bool recursive = true;
-					if (val->GetUserTypeListSize() >= 4) {
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(3)->ToString(), _excuteData, &builder) == "TRUE" ? true : false;
-					}
-					wiz::load_data::LoadData::ReplaceDateType(global, sval, scondition, start_dir, _excuteData, recursive, &builder);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$replace_datetype2" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string sval = val->GetUserTypeList(0)->ToString();
-					std::string scondition = "TRUE";
-					std::string start_dir = "root";
-
-
-					if (val->GetUserTypeListSize() >= 2)
-					{
-						scondition = val->GetUserTypeList(1)->ToString();
-					}
-					if (val->GetUserTypeListSize() >= 3) {
-						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(2)->ToString(), _excuteData, &builder);
-					}
-					bool recursive = true;
-					if (val->GetUserTypeListSize() >= 4) {
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(3)->ToString(), _excuteData, &builder) == "TRUE" ? true : false;
-					}
-					wiz::load_data::LoadData::ReplaceDateType2(global, sval, scondition, start_dir, _excuteData, recursive, &builder);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$remove_usertype_total" == val->GetName()) { //// has bug?
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string ut_name = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string ut_name = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					std::string condition = "TRUE";
 					std::string start_dir = "root";
 
@@ -1688,64 +582,18 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						condition = val->GetUserTypeList(1)->ToString();
 					}
 					if (val->GetUserTypeListSize() >= 3) {
-						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(2)->ToString(), _excuteData, &builder);
+						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 					}
 					bool recursive = false;
 
-					wiz::load_data::LoadData::RemoveUserTypeTotal(global, ut_name, condition, start_dir, _excuteData, recursive, &builder);
+					wiz::load_data::LoadData::RemoveUserTypeTotal(global, ut_name,  start_dir, _excuteData, recursive);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$replace_item" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-					// chk nullptr vs val?
-					std::string svar = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string sval = val->GetUserTypeList(1)->ToString();
-					std::string scondition = "TRUE";
-					std::string start_dir = "root";
-
-					if (val->GetUserTypeListSize() >= 3)
-					{
-						scondition = val->GetUserTypeList(2)->ToString();
-					}
-					if (val->GetUserTypeListSize() >= 4) {
-						start_dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(3)->ToString(), _excuteData, &builder);
-					}
-					bool recursive = true;
-					if (val->GetUserTypeListSize() >= 5) {
-						recursive = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(4)->ToString(), _excuteData, &builder) == "TRUE" ? true : false;
-					}
-					wiz::load_data::LoadData::ReplaceItem(global, svar, sval, scondition, start_dir, _excuteData, recursive, &builder);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$edit_mode" == val->GetName()) // chk!!
+				else if ("$save"sv == val->GetName()) // save data, event, main!
 				{
-#ifdef _MSC_VER
-					if (excuteData.noUseInput || excuteData.noUseOutput) {
-						eventStack.top().userType_idx.top()++;
-						break;
-					}
-					MStyleTest(&global);
-
-					system("cls");
-
-					gotoxy(0, 0);
-					setcolor(7, 0);
-#endif
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$save" == val->GetName()) // save data, event, main!
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1753,9 +601,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 					//todo
 					// "filename" save_option(0~2)
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
-					std::string option = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::string option = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					wiz::load_data::LoadData::SaveWizDB(global, fileName, option, "");
 					wiz::load_data::LoadData::SaveWizDB(Main, fileName, option, "APPEND");
@@ -1764,9 +612,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$save_data_only" == val->GetName())
+				else if ("$save_data_only"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1774,11 +622,11 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 					//todo
 					// "filename" save_option(0~2)
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					if (fileName.back() == '\"' && fileName.size() >= 2 && fileName[0] == fileName.back()) {
 						fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
 					}
-					std::string option = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::string option = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					wiz::load_data::LoadData::SaveWizDB(global, fileName, option, "");
 
@@ -1786,9 +634,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 				}
 
-				else if ("$save_data_only2" == val->GetName())
+				else if ("$save_data_only2"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -1796,18 +644,18 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 					//todo
 					// "filename" save_option(0~2)
-					std::string dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::string dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 					
 					if (fileName.back() == '\"' && fileName.size() >= 2 && fileName[0] == fileName.back()) {
 						fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
 					}
-					std::string option = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(2)->ToString(), _excuteData, &builder);
+					std::string option = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 
 					// todo - for? auto x = global.GetUserTypeItem(dirName);
 					wiz::load_data::UserType* utTemp;
 
-					utTemp = wiz::load_data::UserType::Find(&global, dirName, &builder).second[0];
+					utTemp = wiz::load_data::UserType::Find(&global, dirName).second[0];
 
 					wiz::load_data::LoadData::SaveWizDB(*utTemp, fileName, option, "");
 
@@ -1815,399 +663,94 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				/// module name or object name -> must "~" .
-				else if ("$register_module" == val->GetName())
+				else if ("$option"sv == val->GetName()) // first
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string moduleFileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					moduleFileName = wiz::String::substring(moduleFileName, 1, moduleFileName.size() - 2);
-
-					wiz::load_data::UserType moduleUT;
-					wiz::load_data::LoadData::LoadDataFromFile(moduleFileName, moduleUT);
-
-					//moduleMapPtr.insert(std::make_pair(moduleFileName, moduleUT));
-					(*moduleMapPtr)[moduleFileName] = std::move(moduleUT);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$call_registered_module" == val->GetName())
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-					_excuteData.noUseInput = excuteData.noUseInput;
-					_excuteData.noUseOutput = excuteData.noUseOutput;
-
-					std::string moduleFileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string input;
-
-					if (val->GetUserTypeListSize() >= 2) {
-						input = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-					}
-
-					moduleFileName = wiz::String::substring(moduleFileName, 1, moduleFileName.size() - 2);
-
-					wiz::load_data::UserType moduleUT = (*moduleMapPtr).at(moduleFileName);
-					wiz::load_data::LoadData::AddData(moduleUT, "", input, "TRUE", _excuteData, &builder);
-
-					{
-						ExcuteData _excuteData;
-						_excuteData.noUseInput = excuteData.noUseInput;
-						_excuteData.noUseOutput = excuteData.noUseOutput;
-						
-						Option opt;
-						eventStack.top().return_value = excute_module("", &moduleUT, _excuteData, opt, 0);
-					}
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$module" == val->GetName())
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string moduleFileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string input;
-
-					if (val->GetUserTypeListSize() >= 2) {
-						input = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-					}
-
-					moduleFileName = wiz::String::substring(moduleFileName, 1, moduleFileName.size() - 2);
-
-					wiz::load_data::UserType moduleUT;
-					wiz::load_data::LoadData::LoadDataFromFile(moduleFileName, moduleUT);
-					wiz::load_data::LoadData::AddData(moduleUT, "", input, "TRUE", _excuteData, &builder);
-
-					{
-						ExcuteData _excuteData;
-						_excuteData.noUseInput = excuteData.noUseInput;
-						_excuteData.noUseOutput = excuteData.noUseOutput;
-
-						Option opt;
-						eventStack.top().return_value = excute_module("", &moduleUT, _excuteData, opt, 0);
-					}
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				// todo - register module from file
-				// todo	- register module from std::string
-				// todo - call registered module.  $registered_module = { name = { ~ } input = { input = { n = 1 } } }
-
-				else if ("$register_object" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string objectFileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-
-					objectFileName = wiz::String::substring(objectFileName, 1, objectFileName.size() - 2);
-
-					wiz::load_data::UserType objectUT;
-					wiz::load_data::LoadData::LoadDataFromFile(objectFileName, objectUT);
-
-					//objectMapPtr.insert(std::make_pair(objectFileName, data));
-					(*objectMapPtr)[objectFileName] = std::move(objectUT);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$copy_object" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string objectNameA = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string objectNameB = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-
-					objectNameA = wiz::String::substring(objectNameA, 1, objectNameA.size() - 2);
-					objectNameB = wiz::String::substring(objectNameB, 1, objectNameB.size() - 2);
-
-					(*objectMapPtr)[objectNameB] = (*objectMapPtr).at(objectNameA);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$register_object_from_string" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string objectName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string objectData = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-					objectName = wiz::String::substring(objectName, 1, objectName.size() - 2);
-					objectData = wiz::String::substring(objectData, 1, objectData.size() - 2);
-					wiz::load_data::UserType objectUT;
-					wiz::load_data::LoadData::LoadDataFromString(objectData, objectUT); // error chk?
-
-																						//objectMapPtr.insert(std::make_pair(objectFileName, data));
-					(*objectMapPtr)[objectName] = std::move(objectUT);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$call_registered_object" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string objectFileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					objectFileName = wiz::String::substring(objectFileName, 1, objectFileName.size() - 2);
-					std::string parameter;
-					wiz::load_data::UserType objectUT = objectMapPtr->at(objectFileName);
-
-					parameter = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-
-					std::string data = " Event = { id = NONE $call = { " + parameter + "  } } ";
-
-					wiz::load_data::LoadData::AddData(objectUT, "/./", data, "TRUE", _excuteData, &builder);
-					{
-						ExcuteData _excuteData;
-						_excuteData.noUseInput = excuteData.noUseInput;
-						_excuteData.noUseOutput = excuteData.noUseOutput;
-						Option _opt;
-						
-						eventStack.top().return_value = excute_module(" Main = { $call = { id = NONE } } ", &objectUT, _excuteData, _opt, 0);
-					}
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$call_registered_object2" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string objectFileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					objectFileName = wiz::String::substring(objectFileName, 1, objectFileName.size() - 2);
-					std::string parameter;
-
-					parameter = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-
-					std::string data = " Event = { id = NONE $call = { " + parameter + "  } } ";
-
-					wiz::load_data::UserType objectUT = objectMapPtr->at(objectFileName);
-					wiz::load_data::UserType objectUT2 = objectUT;
-					wiz::load_data::LoadData::AddData(objectUT, "/./", data, "TRUE", _excuteData, &builder);
-					{
-						ExcuteData _excuteData;
-						_excuteData.noUseInput = excuteData.noUseInput;
-						_excuteData.noUseOutput = excuteData.noUseOutput;
-
-						Option _opt;
-						eventStack.top().return_value = excute_module(" Main = { $call = { id = NONE } } ", &objectUT, _excuteData, _opt, 0);
-					}
-					{
-						std::vector<wiz::load_data::UserType*> _events;
-						wiz::load_data::UserType events;
-
-						_events = objectUT2.GetCopyUserTypeItem("Event");
-						for (int i = 0; i < _events.size(); ++i) {
-							events.LinkUserType(_events[i]);
-						}
-
-						wiz::load_data::LoadData::AddData(objectUT, "/./", events.ToString(), "TRUE", _excuteData, &builder);
-					}
-					(*objectMapPtr)[objectFileName] = std::move(objectUT);
-
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				/// object of class?
-				else if ("$object" == val->GetName()) { // "fileName"
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string objectFileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					objectFileName = wiz::String::substring(objectFileName, 1, objectFileName.size() - 2);
-					std::string parameter;
-
-					parameter = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-
-
-					wiz::load_data::UserType objectUT;
-					wiz::load_data::LoadData::LoadDataFromFile(objectFileName, objectUT);
-
-					std::string data = objectUT.ToString();
-
-					data = data + "Event = { id = NONE $call = { " + parameter + "  } } ";
-
-					objectUT.Remove();
-					wiz::load_data::LoadData::LoadDataFromString(data, objectUT);
-					{
-						ExcuteData _excuteData;
-						_excuteData.noUseInput = excuteData.noUseInput;
-						_excuteData.noUseOutput = excuteData.noUseOutput;
-
-						Option opt;
-						eventStack.top().return_value = excute_module(" Main = { $call = { id = NONE } } ", &objectUT, _excuteData, opt, 0);
-					}
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-				else if ("$object_from_string" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string parameter;
-
-					parameter = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-
-
-					wiz::load_data::UserType objectUT;
-					wiz::load_data::LoadData::LoadDataFromString(data, objectUT);
-
-					std::string str = objectUT.ToString();
-
-					str = str + " Event = { id = NONE $call = { " + parameter + "  } } ";
-
-					objectUT.Remove();
-					wiz::load_data::LoadData::LoadDataFromString(str, objectUT);
-					{
-						ExcuteData _excuteData;
-						_excuteData.noUseInput = excuteData.noUseInput;
-						_excuteData.noUseOutput = excuteData.noUseOutput;
-						Option _opt;
-						eventStack.top().return_value = excute_module(" Main = { $call = { id = NONE } } ", &objectUT, _excuteData, _opt, 0);
-					}
-					eventStack.top().userType_idx.top()++;
-					break;
-				}
-
-				// todo - register object from file.
-				//		~.ToString() + "Main = { $call = { id = 0 } } Event = { id = 0 $call = { id = " + id_val + " " + param_name1 + " = " + param_val1 + "  } } "
-				// todo - register object from std::string.
-				// todo - call registered object.  $registered_object = { name = { "ex2.txt" } parameter = { id = 1 i = 1 j = 1 } }  
-
-
-				else if ("$option" == val->GetName()) // first
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					eventStack.top().option = wiz::load_data::LoadData::ToBool4(nullptr, global, val->ToString(), _excuteData, &builder);
+					eventStack.top().option = wiz::load_data::LoadData::ToBool4(nullptr, global, *val, _excuteData).ToString();
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
 				// done - ($push_back-insert!) $pop_back, $push_front, $pop_front ($front?, $back?)
-				else if ("$pop_back" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$pop_back"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					wiz::load_data::UserType* ut = nullptr;
-					auto finded = wiz::load_data::UserType::Find(&global, dir, &builder);
+					auto finded = wiz::load_data::UserType::Find(&global, dir);
 					ut = finded.second[0];
 
 					std::string condition = "TRUE";
 					if (val->GetUserTypeListSize() >= 2) {
 						condition = val->GetUserTypeList(1)->ToString();
 					}
-					wiz::load_data::LoadData::Remove(global, dir, ut->GetIListSize() - 1, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::Remove(global, dir, ut->GetIListSize() - 1,  _excuteData);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$push_front" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$push_front"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string value = val->GetUserTypeList(1)->ToString();
+					std::string value;
 					std::string dir;
 					if (val->GetUserTypeList(0)->GetItemListSize() > 0) {
-						dir = wiz::ToString(val->GetUserTypeList(0)->GetItemList(0).Get(0));
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->GetItemList(0), _excuteData).ToString();
 					}
 					else ///val->Ge
 					{
-						dir = std::string(val->GetUserTypeList(0)->ToString());
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					}
 
 
-					value = wiz::load_data::LoadData::ToBool4(nullptr, global, value, _excuteData, &builder);
+					value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					std::string condition = "TRUE";
 					if (val->GetUserTypeListSize() >= 3) {
 						condition = val->GetUserTypeList(2)->ToString();
 					}
-					wiz::load_data::LoadData::AddDataAtFront(global, dir, value, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::AddDataAtFront(global, dir, value,  _excuteData);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$pop_front" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$pop_front"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 
 					std::string condition = "TRUE";
 					if (val->GetUserTypeListSize() >= 2) {
 						condition = val->GetUserTypeList(1)->ToString();
 					}
-					wiz::load_data::LoadData::Remove(global, dir, 0, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::Remove(global, dir, 0,  _excuteData);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
 				/*
-				else if ("$wait" == val->GetName()) {
+				else if ("$wait"sv == val->GetName()) {
 				for (int i = 0; i < waits.size(); ++i) {
 				waits[i]->join();
 				delete waits[i];
@@ -2219,72 +762,74 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 				}
 				*/
 				
-				// todo - remove??
-				else if ("$call_lambda" == val->GetName())
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$print_option"sv == val->GetName()) {
+				ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
+					_excuteData.chkInfo = true;
+					_excuteData.info = eventStack.top();
+					_excuteData.pObjectMap = objectMapPtr;
+					_excuteData.pEvents = eventPtr;
+					_excuteData.pModule = moduleMapPtr;
+					
+					std::vector<std::string> data(val->GetItemListSize());
+					for (long long i = 0; i < val->GetItemListSize(); ++i) {
+						data[i] = val->GetItemList(i).ToString();
+					}
+
+					bool x = false , y = false;
+					for (long long i = 0; i < data.size(); ++i) {
+						if ("CONSOLE" == data[i]) {
+							x = true;
+						}
+						else if ("FILE" == data[i]) {
+							y = true;
+						}
+					}
+
+
+					if (x && y) {
+						wiz::Out.SetPolicy(2);
+					}
+					else if (x) {
+						wiz::Out.SetPolicy(0);
+					}
+					else { // y
+						wiz::Out.SetPolicy(1);
+					}
+
+					eventStack.top().userType_idx.top()++;
+					break;
+				}
+				else if ("$print_file_option"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					data = data.substr(1, data.size() - 2);
-					std::string parameter; // = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::string fileName = val->GetItemList(0).ToString();
+					wiz::Out.SetFileName(fileName.substr(1, fileName.size() - 2));
 
-					wiz::load_data::UserType dataUT;
-
-					wiz::load_data::LoadData::LoadDataFromString(data, dataUT);
-
-					{
-						std::string id = dataUT.GetUserTypeItem("Event")[0]->GetItem("id")[0].Get(0).ToString();
-						{
-							EventInfo info;
-							for (int j = 0; j < val->GetItemListSize(); ++j) {
-								if (val->GetUserTypeList(1)->GetItemListSize() > 0) {
-									std::string temp = wiz::ToString(val->GetUserTypeList(1)->GetItemList(j).Get(0));
-									std::pair<std::string, std::string> temp2(wiz::ToString(val->GetUserTypeList(1)->GetItemList(j).GetName()), temp);
-									info.parameters.insert(temp2);
-								}
-							}
-
-							for (auto& x : info.parameters) {
-								parameter += x.key.first;
-								parameter += " = ";
-								parameter += "^" + x.key.second;
-							}
-						}
-						{
-							for (int j = 0; j < val->GetUserTypeList(1)->GetUserTypeListSize(); ++j) {
-								if (val->GetUserTypeList(1)->GetUserTypeListSize() > 0) {
-									std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->GetUserTypeList(j)->ToString(), _excuteData, &builder);
-									auto temp2 = std::pair<std::string, std::string>(wiz::ToString(val->GetUserTypeList(1)->GetUserTypeList(j)->GetName()), temp);
-									info.parameters.insert(temp2);
-								}
-							}
-							for (auto& x : info.parameters) {
-								parameter += x.key.first;
-								parameter += " = { ";
-								parameter += "^" + x.key.second;
-								parameter += " } ";
-							}
-						}
-
-						data += " Event = { id = NONE $call = { id = " + id + " " + parameter + "  } } ";
-
-						wiz::load_data::UserType objectUT;
-						wiz::load_data::LoadData::LoadDataFromString(data, objectUT);
-						Option opt;
-						eventStack.top().return_value = excute_module(" Main = { $call = { id = NONE } } ", &objectUT, ExcuteData(), opt, 0);
-					}
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				
-				else if ("$call" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$print_file_clear"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
+					_excuteData.chkInfo = true;
+					_excuteData.info = eventStack.top();
+					_excuteData.pObjectMap = objectMapPtr;
+					_excuteData.pEvents = eventPtr;
+					_excuteData.pModule = moduleMapPtr;
+
+					wiz::Out.clear_file();
+
+
+					eventStack.top().userType_idx.top()++;
+					break;
+				}
+				else if ("$call"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2296,7 +841,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					}
 					else {
 						//// removal?
-						info.id = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeItem("id")[0]->ToString(), _excuteData, &builder);
+						info.id = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeItem("id")[0], _excuteData).ToString();
 					}
 
 					info.eventUT = eventPtr->GetUserTypeList(no);
@@ -2327,7 +872,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						for (int j = 0; j < val->GetUserTypeListSize(); ++j) {
 							if (val->GetUserTypeListSize() > 0) {
 								_excuteData.info = info2;
-								std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(j)->ToString(), _excuteData, &builder);
+								std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(j), _excuteData).ToString();
 								auto temp2 = std::pair<std::string, std::string>(wiz::ToString(val->GetUserTypeList(j)->GetName()), temp);
 								info.parameters.insert(temp2);
 							}
@@ -2345,7 +890,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 								wiz::ArrayMap<std::string, std::string>::iterator x;
 								if ((x = info.parameters.find(wiz::ToString(val->GetItemList(j).GetName()))) != info.parameters.end())
 								{
-									x->key.second = temp;
+									x->second = temp;
 								}
 							}
 						}
@@ -2354,12 +899,12 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 								_excuteData.info = info;
 								_excuteData.info.parameters = info2.parameters;
 
-								std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(j)->ToString(), _excuteData, &builder);
+								std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(j), _excuteData).ToString();
 
 								wiz::ArrayMap<std::string, std::string>::iterator x;
 								if ((x = info.parameters.find(wiz::ToString(val->GetUserTypeList(j)->GetName()))) != info.parameters.end())
 								{
-									x->key.second = temp;
+									x->second = temp;
 								}
 							}
 						}
@@ -2418,8 +963,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					break;
 				}
-				else if ("$call_by_data" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$call_by_data"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2434,7 +979,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					wiz::load_data::LoadData::LoadDataFromString(global.GetUserTypeItem(dir)[0]->ToString(), subGlobal);
 
 					{
-						ExcuteData _excuteData;
+						ExecuteData _excuteData;
 						_excuteData.noUseInput = excuteData.noUseInput;
 						_excuteData.noUseOutput = excuteData.noUseOutput;
 						Option _opt;
@@ -2444,10 +989,37 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				//// no $parameter.~
-				else if ("$assign" == val->GetName()) /// -> assign2?
+				else if ("$call_by_data2"sv == val->GetName()) {
+				ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
+				_excuteData.chkInfo = true;
+				_excuteData.info = eventStack.top();
+				_excuteData.pObjectMap = objectMapPtr;
+				_excuteData.pEvents = eventPtr;
+				_excuteData.pModule = moduleMapPtr;
+				_excuteData.noUseInput = excuteData.noUseInput; //// check!
+				_excuteData.noUseOutput = excuteData.noUseOutput;
+
+
+				std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+
+				wiz::load_data::UserType subGlobal;
+				wiz::load_data::LoadData::LoadDataFromString(global.GetUserTypeItem(dir)[0]->ToString(), subGlobal);
+
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData;
+					_excuteData.noUseInput = excuteData.noUseInput;
+					_excuteData.noUseOutput = excuteData.noUseOutput;
+					Option _opt;
+					eventStack.top().return_value = excute_module("", &subGlobal, _excuteData, _opt, 0);  // return ?
+				}
+
+				eventStack.top().userType_idx.top()++;
+				break;
+				}
+				//// no $parameter.~
+				else if ("$assign"sv == val->GetName()) /// -> assign2?
+				{
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2455,22 +1027,22 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 
 					std::pair<std::string, std::string> dir = wiz::load_data::LoadData::Find2(&global, wiz::ToString(val->GetItemList(0).Get(0)));
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 
 					if (dir.first == "" && wiz::String::startsWith(dir.second, "$local."))
 					{
 						eventStack.top().locals[wiz::String::substring(dir.second, 7)] = data;
 					}
 					else {
-						wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, "TRUE", _excuteData, &builder);
+						wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, _excuteData);
 					}
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
 
-				else if ("$assign2" == val->GetName())
+				else if ("$assign2"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2478,8 +1050,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 
 
-					std::pair<std::string, std::string> dir = wiz::load_data::LoadData::Find2(&global, wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder));
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::pair<std::string, std::string> dir = wiz::load_data::LoadData::Find2(&global, wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString());
+					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					{
 						if (dir.first == "" && wiz::String::startsWith(dir.second, "$local."))
@@ -2487,24 +1059,24 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 							eventStack.top().locals[wiz::String::substring(dir.second, 7)] = data;
 						}
 						else {
-							wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, "TRUE", _excuteData, &builder);
+							wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, _excuteData);
 						}
 					}
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$assign_local" == val->GetName()) /// no condition, 
+				else if ("$assign_local"sv == val->GetName()) /// no  
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::pair<std::string, std::string> dir = wiz::load_data::LoadData::Find2(&global, wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder));
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::pair<std::string, std::string> dir = wiz::load_data::LoadData::Find2(&global, wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString());
+					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					{
 						if (dir.first == "" && dir.second.size() > 1 && dir.second[0] == '@')
@@ -2523,9 +1095,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$assign_global" == val->GetName()) // 二쇱쓽!! dir=> dir/name ( dir= { name = val } } , @瑜??욎뿉 遺숈뿬???쒕떎. 
+				else if ("$assign_global"sv == val->GetName()) // 二쇱쓽!! dir=> dir/name ( dir= { name = val } } , @瑜??욎뿉 遺숈뿬???쒕떎. 
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2533,14 +1105,14 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 
 					std::pair<std::string, std::string> dir = wiz::load_data::LoadData::Find2(&global, 
-						wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder));
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+						wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString());
+					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					//std::string condition;
 					//if (val->GetUserTypeListSize() >= 3) {
-					//	condition = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(2)->ToString(), _excuteData, &builder);
+					//	condition = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(2)->ToString(), _excuteData).ToString();
 					//}
-					wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, "TRUE", _excuteData, &builder);
+					wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, _excuteData);
 
 					// chk local?
 
@@ -2548,8 +1120,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 				}
 
-				else if ("$assign_from_ut" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$assign_from_ut"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2557,112 +1129,109 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 
 					std::pair<std::string, std::string> dir = wiz::load_data::LoadData::Find2(&global, wiz::ToString(val->GetItemList(0).Get(0)));
-					std::string ut_str = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string ut_str = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					wiz::load_data::UserType ut;
 					wiz::load_data::LoadData::LoadDataFromString(ut_str, ut);
 
-					// check! ExcuteData() ?
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, ut, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					// check! ExecuteData() ?
+					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, ut, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					if (dir.first == "" && wiz::String::startsWith(dir.second, "$local."))
 					{
 						eventStack.top().locals[wiz::String::substring(dir.second, 7)] = data;
 					}
 					else {
-						wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, "TRUE", _excuteData, &builder);
+						wiz::load_data::LoadData::SetData(global, dir.first, dir.second, data, _excuteData);
 					}
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
 
 				/// cf) insert3? - any position?
-				else if ("$push_back" == val->GetName() || "$insert" == val->GetName() || "$insert2" == val->GetName())
+				else if ("$push_back"sv == val->GetName() || "$insert"sv == val->GetName() || "$insert2"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string value = val->GetUserTypeList(1)->ToString();
+					std::string value;
 					std::string dir;
 					if (val->GetUserTypeList(0)->GetItemListSize() > 0) {
-						dir = wiz::ToString(val->GetUserTypeList(0)->GetItemList(0).Get(0));
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->GetItemList(0), _excuteData).ToString();
 					}
 					else ///val->Ge
 					{
-						dir = std::string(val->GetUserTypeList(0)->ToString());
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, std::move(dir), _excuteData, &builder);
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					}
 
-					value = wiz::load_data::LoadData::ToBool4(nullptr, global, std::move(value), _excuteData, &builder);
+					value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					std::string condition = "TRUE";
 					if (val->GetUserTypeListSize() >= 3) {
 						condition = val->GetUserTypeList(2)->ToString();
 					}
-					wiz::load_data::LoadData::AddData(global, dir, value, condition, _excuteData, &builder);
-
+					
+					wiz::load_data::LoadData::AddData(global, dir, value,  _excuteData);
+					
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$insert_noname_usertype" == val->GetName())
+				else if ("$insert_noname_usertype"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string position = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);;
-					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);;
+					std::string position = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();;
+					std::string data = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();;
 					std::string condition = val->GetUserTypeList(2)->ToString();
 
-					wiz::load_data::LoadData::AddNoNameUserType(global, position, data, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::AddNoNameUserType(global, position, data,  _excuteData);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$insert_by_idx" == val->GetName())
+				else if ("$insert_by_idx"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string value = val->GetUserTypeList(2)->ToString();
-					int idx = atoi(wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder).c_str());
+					std::string value;
+					int idx = atoi(wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString().c_str());
 					std::string dir;
 					if (val->GetUserTypeList(0)->GetItemListSize() > 0) {
-						dir = wiz::ToString(val->GetUserTypeList(0)->GetItemList(0).Get(0));
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->GetItemList(0), _excuteData).ToString();
 					}
 					else ///val->Ge
 					{
-						dir = std::string(val->GetUserTypeList(0)->ToString());
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					}
 
-					value = wiz::load_data::LoadData::ToBool4(nullptr, global, value, _excuteData, &builder);
+					value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 
 					std::string condition = "TRUE";
 					if (val->GetUserTypeListSize() >= 4) {
 						condition = val->GetUserTypeList(3)->ToString();
 					}
-					wiz::load_data::LoadData::Insert(global, dir, idx, value, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::Insert(global, dir, idx, value,  _excuteData);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$make" == val->GetName()) // To Do? - make2? or remake? 
+				else if ("$make"sv == val->GetName()) // To Do? - make2? or remake? 
 													// cf) make empty ut??
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2672,13 +1241,12 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					std::string dir;
 					bool is2 = false;
 					if (val->GetItemListSize() > 0) { // remove?
-						dir = wiz::ToString(val->GetItemList(0).Get(0));
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetItemList(0), _excuteData).ToString();
 					}
 					else // 
 					{
-						dir = std::string(val->GetUserTypeList(0)->ToString());
-						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+					//	std::cout << val->GetUserTypeList(0)->ToString() << "\n";
+						dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 						is2 = true;
 					}
 
@@ -2701,26 +1269,26 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						condition = val->GetUserTypeList(0)->ToString();
 					}
 
-					wiz::load_data::LoadData::AddUserType(global, dir, name, "", condition, _excuteData, &builder);
+					wiz::load_data::LoadData::AddUserType(global, dir, name, "",  _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$findIndex" == val->GetName()) // For list : { 1 2  3 4 5 }
+				else if ("$findIndex"sv == val->GetName()) // For list : { 1 2  3 4 5 }
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string value = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					std::string value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					wiz::load_data::UserType ut;
-					wiz::load_data::LoadData::LoadDataFromString(wiz::load_data::UserType::Find(&global, dir, &builder).second[0]->ToString(), ut);
+					wiz::load_data::LoadData::LoadDataFromString(wiz::load_data::UserType::Find(&global, dir).second[0]->ToString(), ut);
 
 					for (int i = 0; i < ut.GetItemListSize(); ++i) {
 						if (wiz::ToString(ut.GetItemList(i).Get(0)) == value) {
@@ -2732,40 +1300,40 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$remove" == val->GetName()) // remove by dir., remove all?
+				else if ("$remove"sv == val->GetName()) // remove by dir., remove all?
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = std::string(wiz::ToString(val->GetItemList(0).Get(0)).c_str()); // item -> userType
+					std::string dir;
 
-					dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+					dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetItemList(0), _excuteData).ToString();
 
 					std::string condition = "TRUE";
 					if (val->GetUserTypeListSize() >= 1) {
 						condition = val->GetUserTypeList(0)->ToString();
 					}
-					wiz::load_data::LoadData::Remove(global, dir, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::Remove(global, dir,  _excuteData);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$remove2" == val->GetName()) // remove /dir/name 
+				else if ("$remove2"sv == val->GetName()) // remove /dir/name 
 													   // if name is empty, then chk!!
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = std::string(wiz::ToString(val->GetUserTypeList(0)->ToString()).c_str()); // item -> userType
-					dir = wiz::load_data::LoadData::ToBool4(nullptr, global, dir, _excuteData, &builder);
+					std::string dir; // item -> userType
+					dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					std::string name;
 					for (int i = dir.size() - 1; i >= 0; --i)
 					{
@@ -2780,22 +1348,22 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					if (val->GetUserTypeListSize() >= 2) {
 						condition = val->GetUserTypeList(1)->ToString();
 					}
-					wiz::load_data::LoadData::Remove(global, dir, name, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::Remove(global, dir, name,  _excuteData);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$remove3" == val->GetName()) /// remove itemlist by idx.
+				else if ("$remove3"sv == val->GetName()) /// remove itemlist by idx.
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string value = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					std::string value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					int idx = atoi(value.c_str());  // long long -> int?
 
@@ -2805,35 +1373,35 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						condition = val->GetUserTypeList(2)->ToString();
 					}
 
-					wiz::load_data::LoadData::Remove(global, dir, idx, condition, _excuteData, &builder);
+					wiz::load_data::LoadData::Remove(global, dir, idx,  _excuteData);
 					// remove -> UserType::Find(&global, dir).second[0]->RemoveItemList(idx); /// change ?
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
 
-				else if ("$setElement" == val->GetName())
+				else if ("$setElement"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					std::string idx = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-					std::string value = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(2)->ToString(), _excuteData, &builder);
+					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					std::string idx = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
+					std::string value = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 
 					int _idx = stoi(idx);
-					wiz::load_data::UserType::Find(&global, dir, &builder).second[0]->SetItem(_idx, value);
+					wiz::load_data::UserType::Find(&global, dir).second[0]->SetItem(_idx, value);
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$swap" == val->GetName()) // $swap2
+				else if ("$swap"sv == val->GetName()) // $swap2
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2841,32 +1409,32 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					_excuteData.pModule = moduleMapPtr;
 
 					std::string dir = std::string(wiz::ToString(wiz::ToString(val->GetItemList(0).Get(0)).c_str())); // + 0
-					std::string value1 = val->GetUserTypeList(0)->ToString();
-					std::string value2 = val->GetUserTypeList(1)->ToString();
+					std::string value1;
+					std::string value2;
 
-					value1 = wiz::load_data::LoadData::ToBool4(nullptr, global, value1, _excuteData, &builder);
-					value2 = wiz::load_data::LoadData::ToBool4(nullptr, global, value2, _excuteData, &builder);
+					value1 = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					value2 = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 					if (value1 != value2) {
 						int x = atoi(value1.c_str());
 						int y = atoi(value2.c_str());
 
-						std::string temp = wiz::ToString(wiz::load_data::UserType::Find(&global, dir, &builder).second[0]->GetItemList(x).Get(0));
-						std::string temp2 = wiz::ToString(wiz::load_data::UserType::Find(&global, dir, &builder).second[0]->GetItemList(y).Get(0));
+						std::string temp = wiz::ToString(wiz::load_data::UserType::Find(&global, dir).second[0]->GetItemList(x).Get(0));
+						std::string temp2 = wiz::ToString(wiz::load_data::UserType::Find(&global, dir).second[0]->GetItemList(y).Get(0));
 
-						wiz::load_data::LoadData::SetData(global, dir, x, temp2, "TRUE", _excuteData, &builder);
-						wiz::load_data::LoadData::SetData(global, dir, y, temp, "TRUE", _excuteData, &builder);
+						wiz::load_data::LoadData::SetData(global, dir, x, temp2, _excuteData);
+						wiz::load_data::LoadData::SetData(global, dir, y, temp, _excuteData);
 					}
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$print" == val->GetName()) /// has many bugs..!?, for print list or print item?.
+				else if ("$print"sv == val->GetName()) /// has many bugs..!?, for print list or print item?.
 				{
 					if (excuteData.noUseOutput) {
 						eventStack.top().userType_idx.top()++;
 						break;
 					}
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -2893,48 +1461,49 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 									}
 								}
 							}
-							std::cout << data;*/
-							std::cout << listName;
+							wiz::Out << data;*/
+							wiz::Out << listName;
 						}
 						else if (listName.size() == 2 && listName[0] == '\\' && listName[1] == 'n')
 						{
-							std::cout << '\n';
+							wiz::Out << '\n';
 						}
 						else if (wiz::String::startsWith(listName, "$local.")
 							|| wiz::String::startsWith(listName, "$parameter.")
 							)
 						{
-							std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, listName, _excuteData, &builder);
+							std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->GetItemList(0), _excuteData).ToString();
 							if (temp.empty()) {
-								std::cout << "EMPTY";
+								wiz::Out << "EMPTY";
 							}
 							else {
-								std::cout << temp;
+								wiz::Out << temp;
 							}
 						}
 						else if (wiz::String::startsWith(listName, "/") && listName.size() > 1)
 						{
-							std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, listName, _excuteData, &builder);
+							std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->GetItemList(0), _excuteData).ToString();
 							if (temp != listName) // chk 
 							{
-								std::cout << temp;
+								wiz::Out << temp;
 							}
 							else {
-								wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, listName, &builder).second[0];
+								//std::cout << global.ToString() << "\n";
+								wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, listName).second[0];
 								if (ut->GetItemListSize() == 0 && wiz::ToString(ut->GetItemList(0).GetName()).empty()) {
-									std::cout << wiz::ToString(ut->GetItemList(0).Get(0));
+									wiz::Out << wiz::ToString(ut->GetItemList(0).Get(0));
 								}
 							}
 						}
 						else
 						{
-							auto x = wiz::load_data::UserType::Find(&global, listName, &builder);
+							auto x = wiz::load_data::UserType::Find(&global, listName);
 							if (x.first) {
 								wiz::load_data::UserType* ut = x.second[0];
-								std::cout << ut->ToString();
+								wiz::Out << ut->ToString();
 							}
 							else {
-								std::cout << listName;
+								wiz::Out << listName;
 							}
 						}
 					}
@@ -2943,54 +1512,52 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						&& val->GetUserTypeList(0)->GetItemListSize() == 0
 						&& val->GetUserTypeList(0)->GetUserTypeListSize() == 1)
 					{
-						std::string temp = val->GetUserTypeList(0)->ToString();
-
 						std::string name = wiz::load_data::LoadData::ToBool4(nullptr, global,
-							temp, _excuteData, &builder);
-						std::cout << name;
+							*val->GetUserTypeList(0), _excuteData).ToString();
+						wiz::Out << name;
 					}
 					else
 					{
-						std::string start = val->GetUserTypeList(1)->ToString();
-						std::string last = val->GetUserTypeList(2)->ToString();
+						std::string start;
+						std::string last;
 
-						start = wiz::load_data::LoadData::ToBool4(nullptr, global, start, _excuteData, &builder);
-						last = wiz::load_data::LoadData::ToBool4(nullptr, global, last, _excuteData, &builder);
+						start = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
+						last = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(2), _excuteData).ToString();
 
 						std::string listName = wiz::ToString(val->GetUserTypeList(0)->GetItemList(0).Get(0));
 						int _start = atoi(start.c_str());
 						int _last = atoi(last.c_str());
-						wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, listName, &builder).second[0];
+						wiz::load_data::UserType* ut = wiz::load_data::UserType::Find(&global, listName).second[0];
 						for (int i = _start; i <= _last; ++i)
 						{
-							if (i != _start) { std::cout << " "; }
-							std::cout << wiz::ToString(ut->GetItemList(i).Get(0));
+							if (i != _start) { wiz::Out << " "; }
+							wiz::Out << wiz::ToString(ut->GetItemList(i).Get(0));
 						}
 					}
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$print2" == val->GetName()) /// for print usertype.ToString();
+				else if ("$print2"sv == val->GetName()) /// for print usertype.ToString();
 				{
 					if (excuteData.noUseOutput) {
 						eventStack.top().userType_idx.top()++;
 						break;
 					}
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					auto x = wiz::load_data::UserType::Find(&global, dir, &builder);
+					std::string dir = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					auto x = wiz::load_data::UserType::Find(&global, dir);
 
 					for (int idx = 0; idx < x.second.size(); ++idx) {
-						std::cout << x.second[idx]->ToString();
+						wiz::Out << x.second[idx]->ToString();
 						if (idx < x.second.size() - 1) {
-							std::cout << "\n";
+							wiz::Out << "\n";
 						}
 					}
 
@@ -2998,9 +1565,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 				}
 				// comment copy??
-				else if ("$load" == val->GetName())
+				else if ("$load"sv == val->GetName())
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3036,7 +1603,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 							if (!_Main.empty())
 							{
 								// error!
-								std::cout << "err" << std::endl;
+								wiz::Out << "err" << ENTER;
 
 								return "ERROR -2"; /// exit?
 							}
@@ -3059,7 +1626,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						{
 							auto x = eventPtr->GetUserTypeList(i)->GetItem("id");
 							if (!x.empty()) {
-								//std::cout <<	x[0] << std::endl;
+								//wiz::Out <<	x[0] << ENTER;
 								auto temp = std::pair<std::string, int>(wiz::ToString(x[0].Get(0)), i);
 								convert.insert(temp);
 							}
@@ -3076,9 +1643,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 
 				}
-				else if ("$load_only_data" == val->GetName()) // $load2?
+				else if ("$load_only_data"sv == val->GetName()) // $load2?
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3087,7 +1654,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					// to do, load data and events from other file!
 					wiz::load_data::UserType ut;
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					
 					if (fileName.back() == '\"' && fileName.size() >= 2 && fileName.back() == fileName[0]) {
 						fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
@@ -3100,7 +1667,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						utTemp = &global;
 					}
 					else {
-						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, dirName, ExcuteData(), &builder);
+						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), ExecuteData()).ToString();
 						utTemp = global.GetUserTypeItem(dirName)[0];
 					}
 
@@ -3129,7 +1696,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						//	if (!_Main.empty())
 						//	{
 						// error!
-						//		std::cout << "err" << std::endl;
+						//		wiz::Out << "err" << ENTER;
 
 						//			return "ERROR -2"; /// exit?
 						//		}
@@ -3142,9 +1709,9 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 
 				}
-				else if ("$load_only_data2" == val->GetName()) // $load2?
+				else if ("$load_json"sv == val->GetName()) // $load2?
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3153,222 +1720,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					// to do, load data and events from other file!
 					wiz::load_data::UserType ut;
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					if (fileName.back() == '\"' && fileName.size() >= 2 && fileName.back() == fileName[0]) {
-						fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
-					}
-					std::string dirName = val->GetUserTypeList(1)->ToString();
-					wiz::load_data::UserType* utTemp;
-
-
-					if (dirName == "/./" || dirName == "root") {
-						utTemp = &global;
-					}
-					else {
-						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, dirName, ExcuteData(), &builder);
-						utTemp = global.GetUserTypeItem(dirName)[0];
-					}
-
-
-					int lex_thr_num = 0;
-					int parse_thr_num = 0;
-
-					if (val->GetUserTypeListSize() >= 3) {
-						lex_thr_num = stoi(val->GetUserTypeList(2)->ToString());
-					}
-					if (val->GetUserTypeListSize() >= 4) {
-						parse_thr_num = stoi(val->GetUserTypeList(3)->ToString());
-					}
-
-
-					if (wiz::load_data::LoadData::LoadDataFromFile3(fileName, ut, parse_thr_num - 1, lex_thr_num)) {
-						{
-						
-							for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-								utTemp->PushComment(std::move(ut.GetCommentList(i)));
-							}
-							int item_count = 0;
-							int userType_count = 0;
-
-							for (int i = 0; i < ut.GetIListSize(); ++i) {
-								if (ut.IsItemList(i)) {
-									utTemp->AddItem(std::move(ut.GetItemList(item_count).GetName()),
-										std::move(ut.GetItemList(item_count).Get(0)));
-									item_count++;
-								}
-								else {
-									utTemp->AddUserTypeItem(std::move(*ut.GetUserTypeList(userType_count)));
-									userType_count++;
-								}
-							}
-							
-						}
-						
-						//	auto _Main = ut.GetUserTypeItem("Main");
-						//	if (!_Main.empty())
-						//	{
-						// error!
-						//		std::cout << "err" << std::endl;
-
-						//			return "ERROR -2"; /// exit?
-						//		}
-					}
-					else {
-						// error!
-					}
-
-					eventStack.top().userType_idx.top()++;
-					break;
-
-				}
-			
-#ifdef USE_FAST_LOAD_DATA
-
-				else if ("$fast_load" == val->GetName())
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					// to do, load data and events from other file!
-					for (int i = 0; i < val->GetItemListSize(); ++i) {
-						wiz::load_data::UserType ut;
-						std::string fileName = val->GetItemList(i).Get(0);
-						fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
-
-						if (wiz::load_data::LoadData::FastLoadDataFromFile(fileName, ut)) {
-							{
-								int item_count = 0;
-								int userType_count = 0;
-
-								for (int i = 0; i < ut.GetIListSize(); ++i) {
-									if (ut.IsItemList(i)) {
-										global.AddItem(std::move(ut.GetItemList(item_count).GetName()),
-											std::move(ut.GetItemList(item_count).Get(0)));
-										item_count++;
-									}
-									else {
-										global.AddUserTypeItem(std::move(*ut.GetUserTypeList(userType_count)));
-										userType_count++;
-									}
-								}
-							}
-
-							auto _Main = ut.GetUserTypeItem("Main");
-							if (!_Main.empty())
-							{
-								// error!
-								std::cout << "err" << std::endl;
-
-								return "ERROR -2"; /// exit?
-							}
-						}
-						else {
-							// error!
-						}
-					}
-
-					{
-						convert.clear();
-						auto _events = global.GetCopyUserTypeItem("Event");
-						for (int i = 0; i < _events.size(); ++i) {
-							eventPtr->LinkUserType(_events[i]);
-						}
-						global.RemoveUserTypeList("Event");
-
-						// event table setting
-						for (int i = 0; i < eventPtr->GetUserTypeListSize(); ++i)
-						{
-							auto x = eventPtr->GetUserTypeList(i)->GetItem("id");
-							if (!x.empty()) {
-								//std::cout <<	x[0] << std::endl;
-								convert.insert(std::pair<std::string, int>(x[0].Get(0), i));
-							}
-							else {
-								// error
-							}
-						}
-
-						// update no
-						no = convert[str];
-					}
-
-					eventStack.top().userType_idx.top()++;
-					break;
-
-				}
-				else if ("$fast_load_only_data" == val->GetName()) // $load2?
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					// to do, load data and events from other file!
-					wiz::load_data::UserType ut;
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
-					std::string dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
-					wiz::load_data::UserType* utTemp = global.GetUserTypeItem(dirName)[0];
-
-
-
-					if (wiz::load_data::LoadData::FastLoadDataFromFile(fileName, ut)) {
-						{
-							for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-								utTemp->PushComment(std::move(ut.GetCommentList(i)));
-							}
-							int item_count = 0;
-							int userType_count = 0;
-
-							for (int i = 0; i < ut.GetIListSize(); ++i) {
-								if (ut.IsItemList(i)) {
-									utTemp->AddItem(std::move(ut.GetItemList(item_count).GetName()),
-										std::move(ut.GetItemList(item_count).Get(0)));
-									item_count++;
-								}
-								else {
-									utTemp->AddUserTypeItem(std::move(*ut.GetUserTypeList(userType_count)));
-									userType_count++;
-								}
-							}
-						}
-
-						//	auto _Main = ut.GetUserTypeItem("Main");
-						//	if (!_Main.empty())
-						//	{
-						// error!
-						//		std::cout << "err" << std::endl;
-
-						//			return "ERROR -2"; /// exit?
-						//		}
-					}
-					else {
-						// error!
-					}
-
-					eventStack.top().userType_idx.top()++;
-					break;
-
-				}
-#endif
-				else if ("$load_json" == val->GetName()) // $load2?
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					// to do, load data and events from other file!
-					wiz::load_data::UserType ut;
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
+					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 					fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
 					std::string dirName = val->GetUserTypeList(1)->ToString();
 					wiz::load_data::UserType* utTemp = global.GetUserTypeItem(dirName)[0];
@@ -3378,7 +1730,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						utTemp = &global;
 					}
 					else {
-						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, dirName, ExcuteData(), &builder);
+						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), ExecuteData()).ToString();
 						utTemp = global.GetUserTypeItem(dirName)[0];
 					}
 
@@ -3386,7 +1738,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					if (wiz::load_data::LoadData::LoadDataFromFileWithJson(fileName, ut)) {
 						{
 							//for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-							//	utTemp->PushComment(move(ut.GetCommentList(i)));
+							//	utTemp->PushComment(std::move(ut.GetCommentList(i)));
 							//}
 
 							wiz::load_data::UserType* _ut = ut.GetUserTypeList(0);
@@ -3411,7 +1763,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 						//	if (!_Main.empty())
 						//	{
 						// error!
-						//		std::cout << "err" << std::endl;
+						//		wiz::Out << "err" << ENTER;
 
 						//			return "ERROR -2"; /// exit?
 						//		}
@@ -3424,39 +1776,31 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 
 				}
-				else if ("$load_json2" == val->GetName()) // 
-				{
-				ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-				_excuteData.chkInfo = true;
-				_excuteData.info = eventStack.top();
-				_excuteData.pObjectMap = objectMapPtr;
-				_excuteData.pEvents = eventPtr;
-				_excuteData.pModule = moduleMapPtr;
+				else if ("$load_my_json_schema"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
+					_excuteData.chkInfo = true;
+					_excuteData.info = eventStack.top();
+					_excuteData.pObjectMap = objectMapPtr;
+					_excuteData.pEvents = eventPtr;
+					_excuteData.pModule = moduleMapPtr;
 
-				// to do, load data and events from other file!
-				wiz::load_data::UserType ut;
-				std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-				fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
-				std::string dirName = val->GetUserTypeList(1)->ToString();
-				wiz::load_data::UserType* utTemp = global.GetUserTypeItem(dirName)[0];
+					// to do, load data and events from other file!
+					wiz::load_data::UserType ut;
+					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
+					fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
+					std::string dirName = val->GetUserTypeList(1)->ToString();
+					wiz::load_data::UserType* utTemp = global.GetUserTypeItem(dirName)[0];
 
+					if (dirName == "/./" || dirName == "root") {
+						utTemp = &global;
+					}
+					else {
+						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), ExecuteData()).ToString();
+						utTemp = global.GetUserTypeItem(dirName)[0];
+					}
 
-				if (dirName == "/./" || dirName == "root") {
-					utTemp = &global;
-				}
-				else {
-					dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, dirName, ExcuteData(), &builder);
-					utTemp = global.GetUserTypeItem(dirName)[0];
-				}
-
-
-				if (wiz::load_data::LoadData::LoadDataFromFileFastJson(fileName, ut, 0, 0)) {
-					{
-						//for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-						//	utTemp->PushComment(move(ut.GetCommentList(i)));
-						//}
-
-						wiz::load_data::UserType* _ut = &ut;
+					if (wiz::load_data::LoadData::LoadDataFromFileWithJsonSchema(fileName, ut)) {
+						wiz::load_data::UserType* _ut = ut.GetUserTypeList(0);
 
 						int item_count = 0;
 						int userType_count = 0;
@@ -3472,80 +1816,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 								userType_count++;
 							}
 						}
-					}
 
-					//	auto _Main = ut.GetUserTypeItem("Main");
-					//	if (!_Main.empty())
-					//	{
-					// error!
-					//		std::cout << "err" << std::endl;
-
-					//			return "ERROR -2"; /// exit?
-					//		}
-				}
-				else {
-					// error!
-				}
-
-				eventStack.top().userType_idx.top()++;
-				break;
-
-				}
-				else if ("$load_html" == val->GetName()) // $load2?
-				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
-					_excuteData.chkInfo = true;
-					_excuteData.info = eventStack.top();
-					_excuteData.pObjectMap = objectMapPtr;
-					_excuteData.pEvents = eventPtr;
-					_excuteData.pModule = moduleMapPtr;
-
-					// to do, load data and events from other file!
-					wiz::load_data::UserType ut;
-					std::string fileName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder);
-					fileName = wiz::String::substring(fileName, 1, fileName.size() - 2);
-					std::string dirName = val->GetUserTypeList(1)->ToString();
-					wiz::load_data::UserType* utTemp;
-
-
-					if (dirName == "/./" || dirName == "root") {
-						utTemp = &global;
-					}
-					else {
-						dirName = wiz::load_data::LoadData::ToBool4(nullptr, global, dirName, ExcuteData(), &builder);
-						utTemp = global.GetUserTypeItem(dirName)[0];
-					}
-
-
-					if (wiz::load_data::LoadData::LoadDataFromFileWithHtml(fileName, ut)) {
-						{
-							for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-								utTemp->PushComment(move(ut.GetCommentList(i)));
-							}
-							int item_count = 0;
-							int userType_count = 0;
-
-							for (int i = 0; i < ut.GetIListSize(); ++i) {
-								if (ut.IsItemList(i)) {
-									utTemp->AddItem(std::move(ut.GetItemList(item_count).GetName()),
-										std::move(ut.GetItemList(item_count).Get(0)));
-									item_count++;
-								}
-								else {
-									utTemp->AddUserTypeItem(std::move(*ut.GetUserTypeList(userType_count)));
-									userType_count++;
-								}
-							}
-						}
-
-						//	auto _Main = ut.GetUserTypeItem("Main");
-						//	if (!_Main.empty())
-						//	{
-						// error!
-						//		std::cout << "err" << std::endl;
-
-						//			return "ERROR -2"; /// exit?
-						//		}
 					}
 					else {
 						// error!
@@ -3553,15 +1824,29 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					eventStack.top().userType_idx.top()++;
 					break;
-
 				}
-				else if ("$clear_screen" == val->GetName())
+				else if ("$encoding_utf-8"sv == val->GetName()) {
+#if _WIN32
+					SetConsoleOutputCP(65001); // UTF-8 Codepage 
+#endif
+
+					eventStack.top().userType_idx.top()++;
+					break;
+				}
+				else if ("$encoding_default"sv == val->GetName()) {
+#if _WIN32
+					SetConsoleOutputCP(wiz::load_data::Utility::defaultConsoleEncoding); // UTF-8 Codepage 
+#endif
+					eventStack.top().userType_idx.top()++;
+					break;
+				}
+				else if ("$clear_screen"sv == val->GetName())
 				{
 					system("cls");
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$_getch" == val->GetName())
+				else if ("$_getch"sv == val->GetName())
 				{
 					if (excuteData.noUseInput) {
 						eventStack.top().userType_idx.top()++;
@@ -3572,7 +1857,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$input" == val->GetName())
+				else if ("$input"sv == val->GetName())
 				{
 					if (excuteData.noUseInput) {
 						eventStack.top().userType_idx.top()++;
@@ -3585,7 +1870,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 				}
 				// line
-				else if ("$input2" == val->GetName()) {
+				else if ("$input2"sv == val->GetName()) {
 					if (excuteData.noUseInput) { // when no use input?
 						eventStack.top().userType_idx.top()++;
 						break;
@@ -3596,10 +1881,10 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$return" == val->GetName())
+				else if ("$return"sv == val->GetName())
 				{
 					//// can $return = { a b c }
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3609,14 +1894,14 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					eventStack.top().userType_idx.top()++;
 					if (eventStack.size() > 1)
 					{
-						std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, val->ToString(), _excuteData, &builder);
+						std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, *val, _excuteData).ToString();
 						/// if temp just one
 						eventStack[eventStack.size() - 2].return_value = temp;
 					}
 
 					if (eventStack.size() == 1)
 					{
-						std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, val->ToString(), _excuteData, &builder);
+						std::string temp = wiz::load_data::LoadData::ToBool4(nullptr, global, *val, _excuteData).ToString();
 
 						module_value = temp;
 					}
@@ -3625,7 +1910,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 				}
 				
-				else if ("$return_data" == val->GetName()) { // for functional programming??
+				else if ("$return_data"sv == val->GetName()) { // for functional programming??
 					eventStack.top().userType_idx.top()++;
 
 					if (eventStack.size() > 1)
@@ -3646,19 +1931,19 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 				}
 				
-				else if ("$parameter" == val->GetName())
+				else if ("$parameter"sv == val->GetName())
 				{
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$local" == val->GetName())
+				else if ("$local"sv == val->GetName())
 				{
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
 				// make sort stable.
-				else if ("$sort" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$sort"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3668,7 +1953,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					std::vector<SortInfo> siVec;
 					wiz::load_data::UserType* utTemp =
 						wiz::load_data::UserType::Find(&global,
-							wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder), &builder).second[0];
+							wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString()).second[0];
 
 					std::vector<wiz::load_data::Type*> temp;
 
@@ -3677,12 +1962,12 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					for (int i = 0; i < utTemp->GetIListSize(); ++i) {
 						if (utTemp->IsItemList(i)) {
 							temp.push_back(&(utTemp->GetItemList(item_count)));
-							siVec.emplace_back(wiz::ToString(utTemp->GetItemList(item_count).GetName()), 1, i, &builder);
+							siVec.emplace_back(wiz::ToString(utTemp->GetItemList(item_count).GetName()), 1, i);
 							item_count++;
 						}
 						else {
 							temp.push_back(utTemp->GetUserTypeList(ut_count));
-							siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetName()), 2, i, &builder);
+							siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetName()), 2, i);
 							ut_count++;
 						}
 					}
@@ -3704,14 +1989,14 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					utTemp->Remove();
 
 					//cf) chk? *utTemp = ut;
-					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), "TRUE", _excuteData, &builder);
+					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$sort2" == val->GetName()) { // colName -> just one! ? 
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$sort2"sv == val->GetName()) { // colName -> just one! ? 
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3722,8 +2007,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					std::vector<SortInfo> siVec;
 					wiz::load_data::UserType* utTemp =
 						wiz::load_data::UserType::Find(&global,
-							wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder), &builder).second[0];
-					const std::string colName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+							wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString()).second[0];
+					const std::string colName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 
 					std::vector<wiz::load_data::Type*> temp;
 
@@ -3738,10 +2023,10 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 							temp.push_back(utTemp->GetUserTypeList(ut_count));
 							if (utTemp->GetUserTypeList(ut_count)->GetItem(colName).empty())
 							{
-								siVec.emplace_back("", 2, ut_count, &builder);
+								siVec.emplace_back("", 2, ut_count);
 							}
 							else {
-								siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetItem(colName)[0].Get(0)), 2, ut_count, &builder);
+								siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetItem(colName)[0].Get(0)), 2, ut_count);
 							}
 							ut_count++;
 						}
@@ -3764,15 +2049,15 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					utTemp->RemoveUserTypeList();
 
 					//cf) chk? *utTemp = ut;
-					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), "TRUE", _excuteData, &builder);
+					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$sort2_dsc" == val->GetName()) { // colName -> just one! ? 
+				else if ("$sort2_dsc"sv == val->GetName()) { // colName -> just one! ? 
 														   /// condition = has just one? in one usertype!
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3782,8 +2067,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					std::vector<SortInfo2> siVec;
 					wiz::load_data::UserType* utTemp =
 						wiz::load_data::UserType::Find(&global,
-							wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder), &builder).second[0];
-					const std::string colName = wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(1)->ToString(), _excuteData, &builder);
+							wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString()).second[0];
+					const std::string colName = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(1), _excuteData).ToString();
 					// $it?
 					std::vector<wiz::load_data::Type*> temp;
 
@@ -3798,10 +2083,10 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 							temp.push_back(utTemp->GetUserTypeList(ut_count));
 							if (utTemp->GetUserTypeList(ut_count)->GetItem(colName).empty())
 							{
-								siVec.emplace_back("", 2, ut_count, &builder);
+								siVec.emplace_back("", 2, ut_count);
 							}
 							else {
-								siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetItem(colName)[0].Get(0)), 2, ut_count, &builder);
+								siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetItem(colName)[0].Get(0)), 2, ut_count);
 							}
 							ut_count++;
 						}
@@ -3824,14 +2109,14 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					utTemp->RemoveUserTypeList();
 
 					//cf) chk? *utTemp = ut;
-					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), "TRUE", _excuteData, &builder);
+					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$shell_mode" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$shell_mode"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3850,8 +2135,8 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					break;
 				}
 				// removal?
-				else if ("$stable_sort" == val->GetName()) {
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+				else if ("$stable_sort"sv == val->GetName()) {
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
@@ -3863,7 +2148,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					std::vector<SortInfo> siVec;
 					wiz::load_data::UserType* utTemp =
 						wiz::load_data::UserType::Find(&global,
-							wiz::load_data::LoadData::ToBool4(nullptr, global, val->GetUserTypeList(0)->ToString(), _excuteData, &builder), &builder).second[0];
+							wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString()).second[0];
 
 					std::vector<wiz::load_data::Type*> temp;
 
@@ -3872,12 +2157,12 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					for (int i = 0; i < utTemp->GetIListSize(); ++i) {
 						if (utTemp->IsItemList(i)) {
 							temp.push_back(&(utTemp->GetItemList(item_count)));
-							siVec.emplace_back(wiz::ToString(utTemp->GetItemList(item_count).GetName()), 1, i, &builder);
+							siVec.emplace_back(wiz::ToString(utTemp->GetItemList(item_count).GetName()), 1, i);
 							item_count++;
 						}
 						else {
 							temp.push_back(utTemp->GetUserTypeList(ut_count));
-							siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetName()), 2, i, &builder);
+							siVec.emplace_back(wiz::ToString(utTemp->GetUserTypeList(ut_count)->GetName()), 2, i);
 							ut_count++;
 						}
 					}
@@ -3898,34 +2183,34 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					utTemp->Remove();
 
-					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), "TRUE", _excuteData, &builder);
+					wiz::load_data::LoadData::AddData(*(utTemp), "", ut.ToString(), _excuteData);
 
 
 					eventStack.top().userType_idx.top()++;
 					break;
 				}
-				else if ("$if" == val->GetName()) // ToDo!!
+				else if ("$if"sv == val->GetName()) // ToDo!!
 				{
-					ExcuteData _excuteData; _excuteData.depth = excuteData.depth;
+					ExecuteData _excuteData; _excuteData.depth = excuteData.depth;
 					_excuteData.chkInfo = true;
 					_excuteData.info = eventStack.top();
 					_excuteData.pObjectMap = objectMapPtr;
 					_excuteData.pEvents = eventPtr;
 					_excuteData.pModule = moduleMapPtr;
 
-					std::string temp = val->GetUserTypeList(0)->ToString();
+					std::string temp;
 
 					/*
 					std::pair<std::vector<std::string>, bool> x;
 					if (_map.end() == _map.find(temp)) {
-					x = wiz::load_data::LoadData::ToBool4_A(nullptr, global, temp, _excuteData, &builder);
+					x = wiz::load_data::LoadData::ToBool4_A(nullptr, global, temp, _excuteData);
 					_map.insert(std::make_pair(temp, x));
 					}
 					else {
 					x = _map[temp];
 					}
 					*/
-					temp = wiz::load_data::LoadData::ToBool4(nullptr, global, temp, _excuteData, &builder);
+					temp = wiz::load_data::LoadData::ToBool4(nullptr, global, *val->GetUserTypeList(0), _excuteData).ToString();
 
 
 					if (!eventStack.top().conditionStack.empty())
@@ -3979,11 +2264,11 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					else
 					{
 						// debug..
-						std::cout << "Error Debug : " << temp << std::endl;
+						wiz::Out << "Error Debug : " << temp << ENTER;
 						return "ERROR -3";
 					}
 				}
-				else if ("$else" == val->GetName())
+				else if ("$else"sv == val->GetName())
 				{
 					if (!eventStack.top().conditionStack.empty() && "FALSE" == eventStack.top().conditionStack.top())
 					{
@@ -4003,7 +2288,7 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 					}
 				}
 				else { //
-					std::cout << "it does not work. : " << wiz::ToString(val->GetName()) << std::endl;
+					wiz::Out << "it does not work. : " << wiz::ToString(val->GetName()) << ENTER;
 
 					eventStack.top().userType_idx.top()++;
 					break;
@@ -4065,7 +2350,7 @@ void SaveWithOutEvent(std::ostream& stream, wiz::load_data::UserType* ut, int de
 	}
 
 	for (int i = 0; i < ut->GetIListSize(); ++i) {
-		//std::cout << "ItemList" << endl;
+		//wiz::Out << "ItemList" << endl;
 		if (ut->IsItemList(i)) {
 			for (int j = 0; j < ut->GetItemList(itemListCount).size(); j++) {
 				std::string temp;
@@ -4094,7 +2379,7 @@ void SaveWithOutEvent(std::ostream& stream, wiz::load_data::UserType* ut, int de
 				continue;
 			}
 
-			// std::cout << "UserTypeList" << endl;
+			// wiz::Out << "UserTypeList" << endl;
 			for (int k = 0; k < depth; ++k) {
 				stream << "\t";
 			}
@@ -4129,7 +2414,7 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 
 	while (true)
 	{
-		std::cout << "<< : "; //
+		wiz::Out << "<< : "; //
 		std::getline(std::cin, command);
 
 		if (command.empty()) {
@@ -4140,28 +2425,21 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 		//		$call = { id = 0 } # tab or 들여쓰기!!
 		if (!command.empty() && '$' == command[0]) {
 			if ("$print" == command) {
-				std::cout << ">> : global" << std::endl;
+				wiz::Out << ">> : global" << ENTER;
 				//cout << global.ToString() << endl;
 				global.Save1(std::cout);
-				std::cout << std::endl;
+				wiz::Out << ENTER;
 			}
 			else if ("$print_data_only" == command) {
-				std::cout << ">> : global" << std::endl;
+				wiz::Out << ">> : global" << ENTER;
 				SaveWithOutEvent(std::cout, &global, 0);
-				std::cout << std::endl;
+				wiz::Out << ENTER;
 			}
 			else if ("$exit" == command) {
 				break;
 			}
-			else if ("$M" == command) {
-#ifdef _MSC_VER
-				MStyleTest(&global);  // for windows!
-				system("cls"); // for windows!
+			else if ("$option" == command) {
 
-				gotoxy(0, 0);
-				setcolor(7, 0);
-#endif
-				std::cout << ">> : $M end" << std::endl;
 			}
 			else if (wiz::String::startsWith(command, "$call"))
 			{
@@ -4174,22 +2452,22 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 							wiz::load_data::UserType ut = global;
 							const std::string id = wiz::ToString(test.GetItemList(0).Get(0));
 							Option opt;
-							const std::string result = excute_module("Main = { $call = { id = " + id + "} }", &ut, ExcuteData(), opt, 1);
+							const std::string result = excute_module("Main = { $call = { id = " + id + "} }", &ut, ExecuteData(), opt, 1);
 
 							global = std::move(ut);
-							std::cout << std::endl << "excute result is : " << result << std::endl;
+							wiz::Out << ENTER << "excute result is : " << result << ENTER;
 						}
 						catch (...) // any exception..
 						{
-							std::cout << ">> : $call id or excute module error" << std::endl;
+							wiz::Out << ">> : $call id or excute module error" << ENTER;
 						}
 					}
 					else {
-						std::cout << ">> : $call Error" << std::endl;
+						wiz::Out << ">> : $call Error" << ENTER;
 					}
 				}
 				catch (...) {
-					std::cout << ">> : $call load data from string error" << std::endl;
+					wiz::Out << ">> : $call load data from string error" << ENTER;
 				}
 			}
 			else if (wiz::String::startsWith(command, "$load"))
@@ -4204,16 +2482,16 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 
 						if (wiz::load_data::LoadData::LoadDataFromFile(result, global)) {}
 						else {
-							std::cout << ">> : load data from file error" << std::endl;
+							wiz::Out << ">> : load data from file error" << ENTER;
 						}
 					}
 					catch (...) // any exception..
 					{
-						std::cout << ">> : load error" << std::endl;
+						wiz::Out << ">> : load error" << ENTER;
 					}
 				}
 				else {
-					std::cout << ">> : $load syntax Error" << std::endl;
+					wiz::Out << ">> : $load syntax Error" << ENTER;
 				}
 			}
 			else if (wiz::String::startsWith(command, "$save_event_only"))
@@ -4248,11 +2526,11 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 						if (outFile.is_open()) {
 							outFile.close();
 						}
-						std::cout << ">> : $save_event_only error" << std::endl;
+						wiz::Out << ">> : $save_event_only error" << ENTER;
 					}
 				}
 				else {
-					std::cout << ">> : $save_event_only syntax Error" << std::endl;
+					wiz::Out << ">> : $save_event_only syntax Error" << ENTER;
 				}
 			}
 
@@ -4282,7 +2560,7 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 						if (outFile.is_open()) {
 							outFile.close();
 						}
-						std::cout << ">> : $save_data_only error" << std::endl;
+						wiz::Out << ">> : $save_data_only error" << ENTER;
 					}
 				}
 			}
@@ -4298,11 +2576,11 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 
 					}
 					else {
-						std::cout << ">> : $save error" << std::endl;
+						wiz::Out << ">> : $save error" << ENTER;
 					}
 				}
 				else {
-					std::cout << ">> : $save syntax Error" << std::endl;
+					wiz::Out << ">> : $save syntax Error" << ENTER;
 				}
 			}
 			else if ("$cls" == command) {
@@ -4315,17 +2593,17 @@ void ClauText::ShellMode(wiz::load_data::UserType& global) {
 
 				totalCommand.append(command);
 				if (wiz::load_data::LoadData::LoadDataFromString(totalCommand, global)) {
-					std::cout << ">> : Data Added!" << std::endl;
+					wiz::Out << ">> : Data Added!" << ENTER;
 				}
 				else {
-					std::cout << ">> : Error : loaddata from string " << std::endl;
+					wiz::Out << ">> : Error : loaddata from string " << ENTER;
 				}
 				command = "";
 				totalCommand = "";
 			}
 			else {
 				if (chk_brace[0] == 1) {
-					std::cout << ">> : Error in command, reset command" << std::endl;
+					wiz::Out << ">> : Error in command, reset command" << ENTER;
 					totalCommand = "";
 					command = "";
 					chk_brace.clear();

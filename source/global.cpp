@@ -5,6 +5,13 @@
 #include "wiz/load_data_utility.h"
 
 namespace wiz {
+	inline std::string Remove(const std::string& str)
+	{
+		if (str.size() >= 2 && str.front() == str.back() && str.back() == '\"') {
+			return str.substr(1, str.size() - 2);
+		}
+		return str;
+	}
 
 	long long checkDelimiter(const char* start, const char* last, const std::vector<std::string>& delimiter)
 	{
@@ -47,12 +54,27 @@ namespace wiz {
 				float_value = ToFloat();
 			}
 			else {
-				throw "error in gettype in datatype";
+				//throw "error in gettype in datatype";
 			}
 		}
 		change = false;
 
 		return type;
+	}
+
+	std::string DataType::GetTypeString()const
+	{
+		int value = GetType();
+
+		if (3 == value) {
+			return "INTEGER";
+		}
+		else if (5 == value) {
+			return "FLOAT";
+		}
+		else {
+			return "STRING";
+		}
 	}
 
 	void DataType::SetInt(long long val)
@@ -71,9 +93,40 @@ namespace wiz {
 		change = false;
 	}
 
+
+	DataType::DataType(const char* cstr, size_t len)
+	{
+		this->str_value = std::string(cstr, len);
+
+		if (USE_REMOVE_IN_DATATYPE) {
+			this->str_value = Remove(str_value);
+		}
+		/* // #ifdef DataTypeDebug?
+		this->change = true;
+
+		if (wiz::load_data::Utility::IsInteger(this->str_value)) {
+			this->type = 3;
+			this->int_value = ToInt();
+		}
+		else if (wiz::load_data::Utility::IsDouble(this->str_value)) {
+			this->type = 5;
+			this->float_value = ToFloat();
+		}
+		else {
+			this->type = 1;
+		}
+		*/
+
+		this->change = true; // false;
+	}
+
 	DataType::DataType(const char* cstr)
 	{
 		this->str_value = std::string(cstr);
+		
+		if (USE_REMOVE_IN_DATATYPE) {
+			this->str_value = Remove(str_value);
+		}
 		/* // #ifdef DataTypeDebug?
 		this->change = true;
 
@@ -95,6 +148,11 @@ namespace wiz {
 	DataType::DataType(const std::string& str)
 	{
 		this->str_value = str;
+
+		if (USE_REMOVE_IN_DATATYPE) {
+			this->str_value = Remove(str_value);
+		}
+
 		/*
 		this->change = true;
 
@@ -113,6 +171,31 @@ namespace wiz {
 		this->change = true; // false;
 	}
 
+	DataType::DataType(std::string&& str)
+	{
+		this->str_value = std::move(str);
+
+		if (USE_REMOVE_IN_DATATYPE) {
+			this->str_value = Remove(str_value);
+		}
+
+		/*
+		this->change = true;
+
+		if (wiz::load_data::Utility::IsInteger(this->str_value)) {
+			this->type = 3;
+			this->int_value = ToInt();
+		}
+		else if (wiz::load_data::Utility::IsDouble(this->str_value)) {
+			this->type = 5;
+			this->float_value = ToFloat();
+		}
+		else {
+			this->type = 1;
+		}
+		*/
+		this->change = true; // false;
+	}
 
 	bool DataType::operator==(const DataType& type) const
 	{
@@ -121,6 +204,10 @@ namespace wiz {
 	bool DataType::operator==(const char* cstr) const
 	{
 		return cstr == this->str_value;
+	}
+	bool DataType::operator==(std::string_view str) const
+	{
+		return this->str_value == str;
 	}
 	bool DataType::operator==(const std::string& str) const
 	{
@@ -140,37 +227,44 @@ namespace wiz {
 		return str != this->str_value;
 	}
 
+	DataType DataType::operator+(const DataType& type)const
+	{
+		return DataType(this->str_value + type.str_value);
+	}
 	DataType DataType::operator+(const char* cstr) const
 	{
-		return DataType(cstr + this->str_value);
+		return DataType(this->str_value + std::string(cstr));
 	}
 	DataType DataType::operator+(const std::string& str) const
 	{
-		return DataType(str + this->str_value);
+		return DataType(this->str_value + str);
 	}
 
 	DataType& DataType::operator+=(const DataType& type) 
 	{
 		this->str_value += type.str_value;
+
 		this->change = true;
 		return *this;
 	}
 	DataType& DataType::operator+=(const char* cstr) 
 	{
-		this->str_value += cstr;
-		this->change = true;
+		(*this) += DataType(cstr);
 		return *this;
 	}
 	DataType& DataType::operator+=(const std::string& str)
 	{
-		this->str_value += str;
-		this->change = true;
+		(*this) += DataType(str);
 		return *this;
 	}
 
 	bool operator==(const char* cstr, const DataType& type)
 	{
 		return type == cstr;
+	}
+	bool operator==(std::string_view str, const DataType& type)
+	{
+		return type == str;
 	}
 	bool operator==(const std::string& str, const DataType& type)
 	{
@@ -188,11 +282,50 @@ namespace wiz {
 
 	DataType operator+(const char* cstr, const DataType& type)
 	{
-		return type + cstr;
+		return DataType(cstr) + type;
 	}
 	DataType operator+(const std::string& str, const DataType& type)
 	{
-		return type + str;
+		return DataType(str) + type;
 	}
+
+
+	std::vector<std::string> tokenize(std::string sv, char ch) {
+		std::vector<std::string> result;
+		size_t x;
+		if ((x = sv.find(ch)) == std::string::npos) {
+			if (!sv.empty()) {
+				result.push_back(sv);
+			}
+			return result;
+		}
+
+		if (x > 0) {
+			result.push_back(sv.substr(0, x));
+		}
+
+		size_t y;
+		while (x != std::string::npos) {
+			y = sv.find(ch, x + 1);
+
+			if (y == std::string::npos) {
+				if (x + 1 < sv.size()) {
+					result.push_back(sv.substr(x + 1));
+				}
+				break;
+			}
+			else {
+				if (y - 1 - x + 1 > 0) {
+					result.push_back(sv.substr(x + 1, y - 1 - (x + 1) + 1));
+				}
+			}
+
+			x = y;
+		}
+
+		return result;
+	}
+
+
 }
 
