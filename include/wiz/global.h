@@ -1,10 +1,12 @@
 ﻿#ifndef GLOBAL_H_INCLUDED
 #define GLOBAL_H_INCLUDED
 
+#include <cstring>
 #include <climits>
 #include <vector>
 #include <list>
 #include <string>
+#include <fstream>
 #include <iostream>
 #include <cmath>
 #include <deque>
@@ -31,6 +33,72 @@
 ///
 
 namespace wiz {
+
+	#define ENTER '\n' // cf) ENTER
+
+	class _Out {
+	private:
+		std::string LOG_FILE_NAME = "clautext_log.txt";
+		
+		long policy = 0; // default 0 - only console, 1 - only file, 2 - file and console.
+ 	public:
+		_Out& operator = (const _Out& other) {
+			policy = other.policy;
+			return *this;
+		}
+
+		template<class T>
+		_Out& operator << (const T& data) 
+		{
+			if (0 == policy || 2 == policy) {
+				std::cout << data;
+			}
+			if (1 == policy || 2 == policy) {
+				std::ofstream outFile;
+				outFile.open(LOG_FILE_NAME, std::ios::app);
+				outFile << data;
+				outFile.close();
+			}
+
+			return *this;
+		}
+
+		void clear_file()
+		{
+			if (1 == policy || 2 == policy) {
+				std::ofstream outFile;
+				outFile.open(LOG_FILE_NAME);
+				outFile.close();
+			}
+		}
+	public:
+		_Out(std::string log_file_name = "clautext_log.txt", long policy = 0) 
+			: LOG_FILE_NAME(log_file_name), policy(policy) {
+			//
+		}
+
+		void SetFileName(const std::string& fileName) {
+			LOG_FILE_NAME = fileName;
+		}
+		void SetPolicy(long policy) {
+			this->policy = policy;
+		}
+	};
+	inline _Out Out;
+	inline bool USE_REMOVE_IN_DATATYPE = false;
+	inline bool USE_EMPTY_VECTOR_IN_LOAD_DATA_TYPES = false;
+
+
+	inline long long GetIdx(long long x)  noexcept {
+		return (x >> 32) & 0x00000000FFFFFFFF;
+	}
+	inline long long GetLength(long long x)  noexcept {
+		return (x & 0x00000000FFFFFFFC) >> 2;
+	}
+	inline long long GetType(long long x) noexcept {
+		return x & 3; // % 4
+	}
+
 
 	// 0~n-2 : sorted, 
 	// 0~n-1 : not sorted(maybe?)
@@ -59,6 +127,8 @@ namespace wiz {
 	}
 
 	class DataType {
+	public:
+		int before_pos = -1;
 	private:
 		std::string str_value;
 		mutable long long int_value;
@@ -68,21 +138,32 @@ namespace wiz {
 	public:
 		DataType() { int_value = 0; float_value = 0; }
 		DataType(const char* cstr);
+		DataType(const char* cstr, size_t len);
 		DataType(const std::string& str);
+		DataType(std::string&& str);
+		~DataType() {
+			//
+		}
 	public:
 		void SetInt(long long val);
 		void SetFloat(long double val);
 	public:
 		int GetType()const;
+		std::string GetTypeString()const;
+	public:
+		bool empty()const {
+			return str_value.empty();
+		}
 	public:
 		bool operator==(const DataType& type) const;
 		bool operator==(const char* cstr) const;
 		bool operator==(const std::string& str) const;
-
+		bool operator==(std::string_view str) const;
 		bool operator!=(const DataType& type) const;
 		bool operator!=(const char* cstr) const;
 		bool operator!=(const std::string& str) const;
 
+		DataType operator+(const DataType& type)const;
 		DataType operator+(const char* cstr) const;
 		DataType operator+(const std::string& str) const;
 
@@ -108,10 +189,17 @@ namespace wiz {
 			}
 			return float_value;
 		}
+		friend std::ostream& operator<<(std::ostream& stream, const DataType& x)
+		{
+			stream << x.ToString();
+			return stream;
+		}
 	};
 
 	bool operator==(const char* cstr, const DataType& type);
 	bool operator==(const std::string& str, const DataType& type);
+	bool operator==(std::string_view str, const DataType& type);
+
 
 	bool operator!=(const char* cstr, const DataType& type);
 	bool operator!=(const std::string& str, const DataType& type);
@@ -120,30 +208,9 @@ namespace wiz {
 	DataType operator+(const std::string& str, const DataType& type);
 }
 
-#define WIZ_STRING_TYPE wiz::DataType
+using WIZ_STRING_TYPE = wiz::DataType;
 
 namespace wiz {
-	class Token2
-	{
-	public:
-		char* str = nullptr;
-		int len = 0;
-		bool isComment = false;
-	public:
-		Token2(char* str, int len, bool isComment) :
-			str(str), len(len), isComment(isComment) { }
-
-		Token2() { }
-
-		void clear()
-		{
-			str = nullptr;
-			len = 0;
-			isComment = false;
-		}
-	};
-
-	//
 	inline std::string ToString(WIZ_STRING_TYPE&& x) {
 		return x.ToString();
 	}
@@ -195,42 +262,6 @@ namespace wiz {
 	}
 	*/
 
-	class Token
-	{
-	public:
-		std::string str; // cf) && ?
-		bool isComment;
-	public:
-		Token & operator=(const Token& token) {
-			str = token.str;
-			isComment = token.isComment;
-			return *this;
-		}
-		void operator=(Token&& token) {
-			str = std::move(token.str);
-			isComment = token.isComment;
-		}
-		virtual ~Token() {
-
-		}
-		Token(Token&& token) : str(std::move(token.str)), isComment(token.isComment) { }
-		Token(const Token& token) : str(token.str), isComment(token.isComment) { }
-		explicit Token() : isComment(false) { }
-		explicit Token(std::string&& str, bool isComment = false) : str(std::move(str)), isComment(isComment) { }
-		explicit Token(const std::string& str, bool isComment = false) : str(str), isComment(isComment) { }
-	};
-
-	class LoadDataOption
-	{
-	public:
-		std::vector<std::string> LineComment;	// # 
-		std::vector<std::string> MuitipleLineCommentStart; // ###  // ?
-		std::vector<std::string> MuitipleLineCommentEnd;   // ### // ?
-		std::vector<char> Left, Right;	// { } , [ ] <- json
-		std::vector<std::string> Assignment;	// = , :
-		std::vector<char> Removal;		// ',', empty. 
-	};
-
 	inline int Equal(const std::vector<char>& option, const char ch)
 	{
 		for (int i = 0; i < option.size(); ++i) {
@@ -238,6 +269,23 @@ namespace wiz {
 				return i;
 			}
 		}
+		return -1;
+	}
+	inline int Equal(const std::vector<std::string>& option, const char ch)
+	{
+		for (int i = 0; i < option.size(); ++i) {
+			if (option[i].size() == 1 && ch == option[i][0]) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	inline int Equal2(const char option, const char ch)
+	{
+		if (ch == option) {
+			return 0;
+		}
+
 		return -1;
 	}
 }
@@ -279,7 +327,7 @@ namespace wiz{
     public:
         void operator()( T& t1, T& t2 )
         {
-            std::swap( t1, t2 ); /// if c++11, maybe move...or make Move
+            std::swap( t1, t2 ); /// if c++11, maybe std::move...or make std::move
         }
     };
     template <class T>
@@ -318,10 +366,10 @@ namespace wiz{
 	}
 
     /// TO DO
-    /// MOVE, NO_MOVE
+    /// std::move, NO_MOVE
     /// ( T& t1, T& t2 )
     /// t1 = t2; // NO_MOVE
-    /// t1 = move( t2 ); // MOVE
+    /// t1 = std::move( t2 ); // std::move
 
 	template <class T>
 	class ASC {
@@ -539,7 +587,7 @@ namespace wiz{
 		T i = x;
 
 		const int INT_SIZE = sizeof(T) << 3; ///*8
-		char* temp = new char[INT_SIZE + 1 + 1]; /// 1 NULL, 1 minus
+		char* temp = new char[INT_SIZE + 1 + 1]; /// 1 nullptr, 1 minus
 		std::string tempString;
 		int k;
 		bool isMinus = (i < 0);
@@ -581,7 +629,7 @@ namespace wiz{
 		T k2 = 0;
 
 		const int INT_SIZE = sizeof(T) << 3; ///*8
-		char* temp = new char[INT_SIZE + 1 + 1]; /// 1 NULL, 1 minus
+		char* temp = new char[INT_SIZE + 1 + 1]; /// 1 nullptr, 1 minus
 		for(int i=0; i < INT_SIZE+2; ++i ) { temp[i] = '0'; }//
 		std::string tempString;
 		int k;
@@ -765,8 +813,8 @@ namespace wiz{
 	}
 
 	long long checkDelimiter(const char* start, const char* last, const std::vector<std::string>& delimiter);
-	
 
+	std::vector<std::string> tokenize(std::string sv, char ch);
 }
 
 
