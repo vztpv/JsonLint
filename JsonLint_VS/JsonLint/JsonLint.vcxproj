@@ -151,7 +151,6 @@
     <ClCompile Include="..\..\source\global.cpp" />
     <ClCompile Include="..\..\source\load_data.cpp" />
     <ClCompile Include="..\..\source\main.cpp" />
-    <ClCompile Include="..\..\source\static_declaration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\wiz\array_map.h" />
