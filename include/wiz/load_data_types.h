@@ -192,6 +192,53 @@ namespace wiz {
 
 		class UserType : public Type {
 		private:
+			class Wrap {
+			public:
+				UserType* ut = nullptr;
+				size_t idx = 0;
+				size_t max = 0;
+			public:
+				Wrap(UserType* ut) :
+					ut(ut)
+				{
+					max = ut->GetUserTypeListSize();
+				}
+			};
+			class Wrap2 {
+			public:
+				const UserType* ut = nullptr;
+				size_t idx = 0;
+				size_t max = 0;
+			public:
+				Wrap2(const UserType* ut) :
+					ut(ut)
+				{
+					max = ut->GetUserTypeListSize();
+				}
+			};
+
+			static void Delete(void* ptr) {
+				std::vector<Wrap> _stack;
+				_stack.push_back(Wrap((UserType*)ptr));
+
+				while (!_stack.empty()) {
+					if (_stack.back().idx >= _stack.back().max) {
+						_stack.back().ut->userTypeList.clear();
+						delete _stack.back().ut;
+
+						_stack.pop_back();
+						if (_stack.empty()) {
+							break;
+						}
+						_stack.back().idx++;
+						continue;
+					}
+
+					_stack.push_back(Wrap(_stack.back().ut->GetUserTypeList(_stack.back().idx)));
+				}
+			}
+
+
 			class UserTypeCompare
 			{
 			public:
@@ -391,38 +438,55 @@ namespace wiz {
 				Clear();
 			}
 		private:
-			
-			void Reset(const UserType& ut) { /// UT 占쏙옙체占쏙옙 占쏙옙占쏙옙占싼댐옙.
-											 //	userTypeList_sortFlagA = ut.userTypeList_sortFlagA;
-											 //userTypeList_sortFlagB = ut.userTypeList_sortFlagB;
-				//SetName(ut.GetName());
-				ilist = ut.ilist;
-				itemList = ut.itemList;
-				//parent = ut.parent;
-				commentList = ut.commentList;
-				
-				//sortedItemList = ut.sortedItemList;
-				sortedUserTypeList = ut.sortedUserTypeList;
+			void Reset(const UserType& ut) {
+				std::vector<UserType*> _stack;
+				std::vector<Wrap2> _stack2;
 
-				isObject = ut.isObject;
-				isVirtual = ut.isVirtual;
+				_stack.push_back(this);
+				_stack2.push_back(Wrap2((const UserType*)&ut));
 
-				useSortedItemList = false; // ut.useSortedItemList; - fixed!
-				useSortedUserTypeList = ut.useSortedUserTypeList;
+				while (!_stack2.empty()) {
+					if (_stack2.back().idx >= _stack2.back().max) {
+						{
+							_stack.back()->sortedItemList.clear();
+							_stack.back()->sortedUserTypeList.clear();
 
-				noRemove = ut.noRemove;
+							_stack.back()->name = _stack2.back().ut->name;
+							_stack.back()->ilist = _stack2.back().ut->ilist;
+							_stack.back()->itemList = _stack2.back().ut->itemList;
+							_stack.back()->useSortedItemList = false; // ut.useSortedItemList;
+							_stack.back()->useSortedUserTypeList = false; //ut.useSortedUserTypeList;
 
-				userTypeList.reserve(ut.userTypeList.size());
+							_stack.back()->isObject = _stack2.back().ut->isObject;
+							_stack.back()->isVirtual = _stack2.back().ut->isVirtual;
 
-				for (int i = 0; i < ut.userTypeList.size(); ++i) {
-					userTypeList.push_back(new UserType(*ut.userTypeList[i]));
-					userTypeList.back()->parent = this;
-				}
-				if (useSortedUserTypeList) {
-					sortedUserTypeList.clear();
-					for (int i = 0; i < userTypeList.size(); ++i) {
-						sortedUserTypeList.push_back(userTypeList[i]);
+							_stack.back()->noRemove = _stack2.back().ut->noRemove;
+						}
+
+						{
+							UserType* child = _stack.back();
+
+							_stack.pop_back();
+
+							if (!_stack.empty()) {
+								_stack.back()->LinkUserType(child);
+							}
+						}
+
+						_stack2.pop_back();
+						if (_stack2.empty()) {
+							break;
+						}
+						_stack2.back().idx++;
+						continue;
 					}
+
+					{
+						UserType* child = new UserType();
+						_stack.push_back(child);
+					}
+					_stack2.push_back(Wrap2(_stack2.back().ut->GetUserTypeList(_stack2.back().idx)));
+					_stack.back()->ReserveUserTypeList(_stack2.back().ut->GetUserTypeListSize());
 				}
 			}
 			void Reset2(UserType&& ut) {
@@ -672,7 +736,7 @@ namespace wiz {
 			void RemoveUserTypeList() { /// chk memory leak test!!
 				for (int i = 0; i < userTypeList.size(); i++) {
 					if (nullptr != userTypeList[i]) {
-						delete userTypeList[i]; //
+						Delete(userTypeList[i]); //
 						userTypeList[i] = nullptr;
 					}
 				}
