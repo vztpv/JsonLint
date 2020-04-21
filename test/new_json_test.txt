@@ -1,0 +1,59 @@
+﻿
+data = {
+	#
+}
+schema = {
+	#
+}
+
+# $encoding = UTF-8
+Event = {
+	id = __init__  # special event. // before validation.
+	
+	# for output to console, output to file.
+	$encoding_utf-8 = { }
+	
+	# LoadData
+	$load = { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\b.txt" } 
+	
+	# LoadData->LoadData2
+	$load_json = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\a.json" }  { data } }
+	
+	# todo - LoadData2? : 333'dddd'333 -> one token, 
+	# todo - # line comment, // line comment, /* */ comment,
+	# clau test parer + clauText + claujson..
+	
+	$load_my_json_schema = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\schema.txt" } { schema } }
+	
+	$print = { { "init end.." } }
+	$print = { enter = { \n } }
+	
+	$print2 = { { /./schema } }
+	
+	$return = { data schema } # returns folder names?
+}
+
+Event = {
+	id = __end__ # special event. // after validation
+	
+	$print = { data = { "end__" } }
+	$print = { enter = { \n } }
+	$_getch = { }
+}
+
+x = 10
+
+Style = {
+	id = x
+	
+	%multiple
+	%optional
+	%event_int_string = { }
+	%event_list_sum_larger_than = { n = /./x }
+}
+
+Enum = {
+	id = x
+	
+	1 2 3 4
+}

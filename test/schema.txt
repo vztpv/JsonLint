@@ -1,0 +1,25 @@
+﻿
+{
+	$log : on, // comment 
+	#"abc" : "aaaa"dddd'eee'"333",
+	"xxx"%optional : %int%event_larger_than@'n = 300',  # ' '
+	"yyy" : 3,
+	
+	"x" : {
+		"z" : { 
+			%event_int_string%multiple : [ 3 ],
+			
+			"c" : [ %int ] ,
+			"d" : [ %int ] , 
+			/*  
+				comment
+			*/
+			"e" : [ %int , %int ]		
+		},
+		%multiple : {
+			%style_x : [		
+				%multiple%event_int%array_x%total_id
+			]
+		}
+	}
+}
