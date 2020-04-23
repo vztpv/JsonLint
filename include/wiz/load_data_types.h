@@ -246,12 +246,32 @@ namespace wiz {
 					return x->GetName().ToString() < y->GetName().ToString();
 				}
 			};
+			
 			class ItemTypeStringPtrCompare {
 			public:
 				bool operator() (const ItemType<WIZ_STRING_TYPE>* x, const ItemType<WIZ_STRING_TYPE>* y) const {
 					return x->GetName().ToString() < y->GetName().ToString();
 				}
 			};
+			
+			class ItemTypeStringCompare {
+			public:
+				bool operator() (const ItemType<WIZ_STRING_TYPE>& x, const ItemType<WIZ_STRING_TYPE>& y) const {
+					auto a = x.GetName().ToString();
+					auto b = y.GetName().ToString();
+
+					if (a == b) {
+						return x.Get().ToString() < y.Get().ToString();
+					}
+					return a < b;
+				}
+			};
+
+			void sort_item_list() {
+				std::sort(this->itemList.begin(), this->itemList.end(), ItemTypeStringCompare());
+				useSortedItemList = true;
+			}
+
 			int binary_find_ut(const std::vector<UserType*>& arr, std::string x) const
 			{
 				if (arr.empty()) { return -1; }
@@ -313,9 +333,9 @@ namespace wiz {
 				return commentList[idx];
 			}
 		public:
-			int GetIListSize()const { return ilist.size(); }
-			int GetItemListSize()const { return itemList.size(); }
-			int GetUserTypeListSize()const { return userTypeList.size(); }
+			size_t GetIListSize()const { return ilist.size(); }
+			size_t GetItemListSize()const { return itemList.size(); }
+			size_t GetUserTypeListSize()const { return userTypeList.size(); }
 			ItemType<WIZ_STRING_TYPE>& GetItemList(const int idx) { return itemList[idx]; }
 			const ItemType<WIZ_STRING_TYPE>& GetItemList(const int idx) const { return itemList[idx]; }
 			UserType*& GetUserTypeList(const int idx) { return userTypeList[idx]; }

@@ -436,11 +436,9 @@ namespace wiz{
 		bool operator() (const T t1, const T t2) const { return *t1 == *t2; }
 	};
 
-    /// TO DO
-    /// PASC_PEE, PDSC_PEE, PNOT_EE, PEE_SAME_VALUE, PNOT_EE_SAME_VALUE
-    /// LEFT_HAS_SMALL_VALUE, LEFT_HAS_LARGE_VALUE, PLEFT_HAS_SMALL_VALUE, PLEFT_HAS_LARGE_VALUE
+
 	template <typename T> /// T <- char, int, long, long long...
-	std::string toStr(const T x, const int base); /// chk!!
+	std::string toStr(const T x, const int base = 10);
 
 	template <class T, class COMP = ASC<T>, class COMP2 = ASC<int>, class EE = EQ<T> > /// 쒖꽌 諛붽씀湲 - 2015.07.18
 	class WrapForInfinity
@@ -580,9 +578,8 @@ namespace wiz{
 		// -( x - ( (x/10) * 10 ) )
 	}
 	template <typename T> /// T <- char, int, long, long long...
-	std::string toStr(const T x) /// chk!!
+	std::string toStr(const T x, const int base) /// chk!!
 	{
-		const int base = 10;
 		if( base < 2 || base > 16 ) { return "base is not valid"; }
 		T i = x;
 
@@ -621,9 +618,8 @@ namespace wiz{
 
     /// chk.... need more thinking..., ToDo...
 	template <typename T> /// T <- char, int, long, long long...
-	std::string toStr2(const T x, const int str_space) /// chk!!
+	std::string toStr2(const T x, const int base, const int str_space) /// chk!!
 	{
-		const int base = 10;
 	    if( base < 2 || base > 16 ) { return "base is not valid"; }
 		T i = x;
 		T k2 = 0;

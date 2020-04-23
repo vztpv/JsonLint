@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <fstream>
 #include <thread> // maybe error with C++/CLI?
 #include <algorithm>
@@ -20,8 +21,189 @@ namespace wiz {
 	namespace load_data {
 		class Utility
 		{
+		private:
+			static char convert(const char* arr) {
+				char sum = 0;
+				for (int i = 0; i < 8; ++i) {
+					sum += arr[i] - '0';
+					sum = sum << 1;
+				}
+				return sum;
+			}
+			static bool equal(char x, char filter, char filter_size) {
+				bool bx[8] = { false, }, bf[8] = { false, };
+				for (int i = 0; i < 8; ++i) {
+					if (x < 0) {
+						bx[i] = true;
+						x = x << 1;
+					}
+					if (filter < 0) {
+						bf[i] = true;
+						filter = filter << 1;
+					}
+				}
+				for (int i = 0; i < filter_size; ++i) {
+					if (bx[i] != bf[i]) {
+						return false;
+					}
+				}
+				return true;
+			}
+			static bool validate(const char* text, long long num) {
+				if (text[0] > 0 && text[0] >= 0x20) {
+					return true;
+				}
+
+				if (equal(text[0], 0b11000000, 3) && num >= 2) {
+					if (equal(text[1], 0b10000000, 2)) {
+						return true;
+					}
+					return false;
+				}
+
+				if (equal(text[0], 0b11100000, 4) && num >= 3) {
+					if (equal(text[1], 0b10000000, 2)) {
+						if (equal(text[2], 0b10000000, 2)) {
+							return true;
+						}
+					}
+					return false;
+				}
+
+				if (equal(text[0], 0b11110000, 5) && num >= 4) {
+					if (equal(text[1], 0b10000000, 2)) {
+						if (equal(text[2], 0b10000000, 2)) {
+							if (equal(text[3], 0b10000000, 2)) {
+								return true;
+							}
+							return false;
+						}
+					}
+					return false;
+				}
+
+				return false;
+			}
+		public:
+			static bool ValidateUTF8(const char* text, long long idx, long long len) {
+				for (long long i = 0; i < len; ++i) {
+					if (!validate(text + idx, std::min((long long)4, len - i))) {
+						return false;
+					}
+				}
+				return true;
+			}
+			// u0000 ->
+			static std::string Convert(std::string_view str, size_t idx) { // idx -> u next..
+				std::string temp;
+				std::string result; 
+
+				for (size_t i = 0; i < 4; ++i) {
+					char val = str[idx + i];
+					
+					if (val >= '0' && val <= '9') {
+						temp += wiz::toStr2(val - '0', 2, 4);
+					}
+					else if (val >= 'a' && val <= 'f') {
+						temp += wiz::toStr2(val - 'a' + 10, 2, 4);
+					}
+					else if (val >= 'A' && val <= 'F') {
+						temp += wiz::toStr2(val - 'A' + 10, 2, 4);
+					}
+				}
+				
+				long long sum = 0;
+				bool pass = false;
+				long long temp_idx = -1;
+
+				for (size_t i = 0; i < temp.size(); ++i) {
+					if (!pass && temp[i] == '1') {
+						temp_idx = i;
+						pass = true;
+					}
+					sum += temp[i] - '0';
+					sum = sum << 1;
+				}
+
+				if (sum < 0x0080) {
+					result.resize(1); 
+					result[0] = sum;
+				}
+				else if (sum < 0x0800) {
+					result.resize(2);
+					char first[8] = { '1', '1', '0' };
+					char second[8] = { '1', '0' };
+
+					size_t count = 0;
+					for (int i = 0; i < 5; ++i) {
+						first[3 + i] = temp[temp_idx + count];
+						count++;
+					}
+					for (int i = 0; i < 6; ++i) {
+						second[2 + i] = temp[temp_idx + count];
+						count++;
+					}
+					result[0] = convert(first);
+					result[1] = convert(second);
+				}
+				else if (sum <= 0xFFFF) {
+					result.resize(3);
+					char first[8] = { '1', '1', '1', '0' };
+					char second[8] = { '1', '0' };
+					char third[8] = { '1', '0' };
+
+					size_t count = 0;
+					for (int i = 0; i < 4; ++i) {
+						first[4 + i] = temp[temp_idx + count];
+						count++;
+					}
+					for (int i = 0; i < 6; ++i) {
+						second[2 + i] = temp[temp_idx + count];
+						count++;
+					}
+					for (int i = 0; i < 6; ++i) {
+						third[2 + i] = temp[temp_idx + count];
+						count++;
+					}
+					result[0] = convert(first);
+					result[1] = convert(second);
+					result[2] = convert(third);
+				}
+				else {
+					std::cout << "error in Convert\n";
+				}
+				return result;
+			}
+			
+			static bool Equal(std::string str1, std::string str2) {
+				int start = 0;
+				do {
+					int idx = String::find(str1, "\\u", start);
+					if (idx != -1) {
+						str1 = str1.substr(0, idx - 1) + Convert(str1, idx + 2) + str1.substr(idx + 6);
+						start = idx + 6;
+					}
+					else {
+						break;
+					}
+				} while (true);
+				start = 0;
+				do {
+					int idx = String::find(str2, "\\u", start);
+					if (idx != -1) {
+						str2 = str2.substr(0, idx - 1) + Convert(str2, idx + 2) + str2.substr(idx + 6);
+						start = idx + 6;
+					}
+					else {
+						break;
+					}
+				} while (true);
+
+				return str1 == str2;
+			}
 		public:
 			static bool IsInteger(std::string_view str) {
+				return IsIntegerInJson(str);
 				//if (str.size() > 2 && str[0] == str.back() && (str[0] == '\"' || str[0] == '\'')) {
 				//	str = str.substr(1, str.size() - 2);
 				//}
@@ -48,13 +230,12 @@ namespace wiz {
 				}
 				return 1 == state; /// chk..
 			}
-			static bool IsNumberInJson(std::string_view str)
-			{
+			static bool IsIntegerInJson(std::string_view str) {
 				//if (str.size() > 2 && str[0] == str.back() && (str[0] == '\"' || str[0] == '\'')) {
 				//	str = str.substr(1, str.size() - 2);
 				//}
 				int state = 0;
-				for (int i = 0; i < str.size(); ++i) {
+				for (size_t i = 0; i < str.size(); ++i) {
 					switch (state)
 					{
 					case 0:
@@ -62,12 +243,123 @@ namespace wiz {
 							'-' == str[i]
 							) {
 							state = 0;
+							if (i > 0 && str[i - 1] == '-') {
+								return false;
+							}
 						}
-						else if (str[i] >= '0' && str[i] <= '9')
+						else if (str[i] >= '1' && str[i] <= '9')
 						{
 							state = 1;
 						}
+						else if (str[i] == '0') {
+							state = -1;
+						}
 						else { return false; }
+						break;
+					case -1:
+						{
+							return false;
+						}
+					break;
+					case 1:
+						if (str[i] >= '0' && str[i] <= '9') {
+							state = 1;
+						}
+						else { return false; }
+						break;
+					}
+				}
+				return -1 == state || 1 == state;
+			}
+			static bool IsFloatInJson(std::string_view str) {
+				//if (str.size() > 2 && str[0] == str.back() && (str[0] == '\"' || str[0] == '\'')) {
+				//	str = str.substr(1, str.size() - 2);
+				//}
+				int state = 0;
+				for (size_t i = 0; i < str.size(); ++i) {
+					switch (state)
+					{
+					case 0:
+						if ( // '+' == str[i] || // why can`t +
+							'-' == str[i]
+							) {
+							state = 0;
+							if (i > 0 && str[i - 1] == '-') {
+								return false;
+							}
+						}
+						else if (str[i] >= '1' && str[i] <= '9')
+						{
+							state = 1;
+						}
+						else if (str[i] == '0') {
+							state = -1;
+						}
+						else { return false; }
+						break;
+					case -1:
+						if (str[i] == '.') {
+							state = 2;
+						}
+						else {
+							return false;
+						}
+						break;
+					case 1:
+						if (str[i] >= '0' && str[i] <= '9') {
+							state = 1;
+						}
+						else if (str[i] == '.') {
+							state = 2;
+						}
+						else { return false; }
+						break;
+					case 2:
+						if (str[i] >= '0' && str[i] <= '9') { state = 3; }
+						else { return false; }
+						break;
+					case 3:
+						if (str[i] >= '0' && str[i] <= '9') { state = 3; }
+						else { return false; }
+						break;
+					}
+				}
+				return 3 == state;
+			}
+			static bool IsNumberInJson(std::string_view str)
+			{
+				//if (str.size() > 2 && str[0] == str.back() && (str[0] == '\"' || str[0] == '\'')) {
+				//	str = str.substr(1, str.size() - 2);
+				//}
+				int state = 0;
+				for (size_t i = 0; i < str.size(); ++i) {
+					switch (state)
+					{
+					case 0:
+						if ( // '+' == str[i] || // why can`t +
+							'-' == str[i]
+							) {
+							state = 0;
+							if (i > 0 && str[i - 1] == '-') {
+								return false;
+							}
+						}
+						else if (str[i] >= '1' && str[i] <= '9')
+						{
+							state = 1;
+						}
+						else if (str[i] == '0') {
+							state = -1;
+						}
+						else { return false; }
+						break;
+					case -1:
+						if (str[i] == '.') {
+							state = 2;
+						}
+						else {
+							return false;
+						}
 						break;
 					case 1:
 						if (str[i] >= '0' && str[i] <= '9') {
@@ -93,8 +385,11 @@ namespace wiz {
 						if (str[i] == '+' || str[i] == '-') {
 							state = 5;
 						}
+						else if ('0' <= str[i] && str[i] <= '9') {
+							state = 6;
+						}
 						else {
-							state = 5;
+							return false;
 						}
 						break;
 					case 5:
@@ -114,9 +409,11 @@ namespace wiz {
 						}
 					}
 				}
-				return 3 == state || 6 == state;
+				return -1 == state || 1 == state ||  3 == state || 6 == state;
 			}
 			static bool IsDouble(std::string_view str) {
+				return IsFloatInJson(str);
+
 				//if (str.size() > 2 && str[0] == str.back() && (str[0] == '\"' || str[0] == '\'')) {
 				//	str = str.substr(1, str.size() - 2);
 				//}

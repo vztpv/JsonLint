@@ -41,8 +41,6 @@ namespace wiz {
 			case '\t':
 			case '\r':
 			case '\n':
-			case '\v':
-			case '\f':
 				return true;
 				break;
 			}
@@ -651,6 +649,25 @@ namespace wiz {
 		class InFileReserverJson
 		{
 		private:
+		private:
+			static bool IsSame(const char* buffer, const long long x, std::string_view y) {
+				long long x_size = GetLength(x);
+				long long x_idx = GetIdx(x);
+
+				if (x_size != y.size()) {
+					return false;
+				}
+
+				for (long long i = 0; i < x_size; ++i) {
+					if (buffer[x_idx + i] != y[i]) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+
 			// todo - rename.
 			static long long Get(long long position, long long length, char ch, const wiz::load_data::LoadDataOption2& option) {
 				long long x = (position << 33) + (length << 4) + 0;
@@ -745,8 +762,6 @@ namespace wiz {
 						case ' ':
 						case '\t':
 						case '\r':
-						case '\v':
-						case '\f':
 							token_last = i - 1;
 							if (token_last - token_first + 1 > 0) {
 								token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -903,7 +918,7 @@ namespace wiz {
 				bool comma_on = false;
 
 				std::stack<char> _stack;
-				_stack.push(option.Left);
+				_stack.push(option.Left2);
 
 				int state = 0;
 				//long long line = 1;
@@ -949,12 +964,59 @@ namespace wiz {
 								len = _len;
 								idx = _idx;
 								ch = text[_idx];
+
+								if (!Utility::ValidateUTF8(text, idx + 1, len - 2)) {
+									std::cout << "not valid char";
+								}
 							}
 						}
 						else if (3 == state) {
 							if (idx != slush_start + 1) {
 								--i;
 							}
+
+							long long back_slush_count = 0;
+
+							switch (text[slush_start + 1]) {
+								case '\"':
+								case '\\':
+								case '/':
+								case 'b':
+								case 'f':
+								case 'n':
+								case 'r':
+								case 't':
+									state = 1;
+									break;
+								case 'u':
+									back_slush_count = 4;
+									state = 2;
+									break;
+								default:
+									state = 1;
+									std::cout << "Syntax Error in pre-parsing0\n";
+									break;
+							}
+
+							if (slush_start + 1 + 4 >= length) {
+								std::cout << "Syntax Error in pre-parsing0.25\n";
+							}
+
+							for(long long k = 2; k < back_slush_count + 2; ++k) {
+								if (text[slush_start + k] >= '0' && text[slush_start + k] <= '9') {
+									//
+								}
+								else if (text[slush_start + k] >= 'a' && text[slush_start + k] <= 'f') {
+									//
+								}
+								else if (text[slush_start + k] >= 'A' && text[slush_start + k] <= 'F') {
+									//
+								}
+								else {
+									std::cout << "Syntax Error in pre-parsing0.5\n";
+								}
+							}
+
 							state = 1;
 						}
 					}
@@ -1059,6 +1121,26 @@ namespace wiz {
 									}
 								}
 								else if (val) {
+									if (text[idx] == '\"' &&
+										text[idx + len - 1] == '\"' && len >= 2) {
+										//
+									}
+									else if (IsSame(text, tokens[real_token_arr_count - 1], "true")) {
+										//
+									}
+									else if (IsSame(text, tokens[real_token_arr_count - 1], "false")) {
+										//
+									}
+									else if (IsSame(text, tokens[real_token_arr_count - 1], "null")) {
+										//
+									}
+									else if (Utility::IsNumberInJson(std::string_view(text + idx, len))) {
+										//
+									}
+									else {
+										std::cout << "Syntax Error in pre-parsing8.25\n";
+									}
+
 									expect_comma = true;
 									val = false;
 								}
@@ -1087,6 +1169,26 @@ namespace wiz {
 										expect_comma = true;
 										val = false;
 									}
+								}
+
+								if (text[idx] == '\"' &&
+									text[idx + len - 1] == '\"' && len >= 2) {
+									//
+								}
+								else if (IsSame(text, tokens[real_token_arr_count - 1], "true")) {
+									//
+								}
+								else if (IsSame(text, tokens[real_token_arr_count - 1], "false")) {
+									//
+								}
+								else if (IsSame(text, tokens[real_token_arr_count - 1], "null")) {
+									//
+								}
+								else if (Utility::IsNumberInJson(std::string_view(text + idx, len))) {
+									//
+								}
+								else {
+									std::cout << "Syntax Error in pre-parsing9.5\n";
 								}
 							}
 							else {
@@ -1130,7 +1232,7 @@ namespace wiz {
 				long long token_arr_size = 0;
 
 				{
-					int state = 0;
+					int state = 0; int back_slush_count = 0; // \" \n -> 1, \uabcd -> 5
 
 					long long token_first = 0;
 					long long token_last = -1;
@@ -1225,7 +1327,47 @@ namespace wiz {
 							}
 						}
 						else if (2 == state) {
-							state = 1;
+							if (back_slush_count == 0) {
+								switch (ch) {
+								case '\"':
+								case '\\':
+								case '/':
+								case 'b':
+								case 'f':
+								case 'n':
+								case 'r':
+								case 't':
+									state = 1;
+									break;
+								case 'u':
+									back_slush_count = 4;
+									state = 2;
+									break;
+								default:
+									state = 1;
+									std::cout << "Syntax Error in pre-parsing0\n";
+									break;
+								}
+							}
+							else {
+								if (ch >= '0' && ch <= '9') {
+									//
+								}
+								else if (ch >= 'a' && ch <= 'f') {
+									//
+								}
+								else if (ch >= 'A' && ch <= 'F') {
+									//
+								}
+								else {
+									std::cout << "Syntax Error in pre-parsing0.5\n";
+								}
+								back_slush_count--;
+
+								if (0 == back_slush_count) {
+									state = 1;
+								}
+							}
 						}
 						else if (3 == state) {
 							if ('\n' == ch || '\0' == ch) {
@@ -1239,7 +1381,7 @@ namespace wiz {
 					}
 
 					std::stack<char> _stack;
-					_stack.push(option.Left);
+					_stack.push(option.Left2);
 					bool expect_comma = false;
 					bool comma_on = false;
 					int parse_state = 0;
@@ -1262,6 +1404,9 @@ namespace wiz {
 						const long long len = GetLength(token_arr[i]);
 						const long long idx = GetIdx(token_arr[i]);
 
+
+						token_arr[real_token_arr_count] = token_arr[i];
+						real_token_arr_count++;
 
 						if (expect_comma) {
 							if (len == 1 && ch == ',') {
@@ -1354,6 +1499,26 @@ namespace wiz {
 								else if (val) {
 									expect_comma = true;
 									val = false;
+
+									if (text[idx] == '\"' &&
+										text[idx + len - 1] == '\"' && len >= 2) {
+										//
+									}
+									else if (IsSame(text, token_arr[real_token_arr_count - 1], "true")) {
+										//
+									}
+									else if (IsSame(text, token_arr[real_token_arr_count - 1], "false")) {
+										//
+									}
+									else if (IsSame(text, token_arr[real_token_arr_count - 1], "null")) {
+										//
+									}
+									else if (Utility::IsNumberInJson(std::string_view(text + idx, len))) {
+										//
+									}
+									else {
+										std::cout << "Syntax Error in pre-parsing8.25\n";
+									}
 								}
 
 								comma_on = false;
@@ -1382,6 +1547,23 @@ namespace wiz {
 										expect_comma = true;
 										val = false;
 									}
+								}
+
+								if (text[idx] == '\"' &&
+									text[idx + len - 1] == '\"' && len >= 2) {
+									//
+								}
+								else if (IsSame(text, token_arr[real_token_arr_count - 1], "true")) {
+									//
+								}
+								else if (IsSame(text, token_arr[real_token_arr_count - 1], "false")) {
+									//
+								}
+								else if (IsSame(text, token_arr[real_token_arr_count - 1], "null")) {
+									//
+								}
+								else {
+									std::cout << "Syntax Error in pre-parsing9.5\n";
 								}
 							}
 							else {
@@ -1858,7 +2040,7 @@ namespace wiz {
 				bool comma_on = false;
 
 				std::stack<char> _stack;
-				_stack.push(option.Left);
+				_stack.push(option.Left2);
 
 				int state = 0;
 				long long line = 1;
@@ -1924,6 +2106,11 @@ namespace wiz {
 									++i;
 								}
 
+
+								if (!Utility::ValidateUTF8(text, idx, len)) {
+									std::cout << "not valid char";
+								}
+
 								tokens[real_token_arr_count] = Get(idx, len, ch, option);
 								real_token_arr_count++;
 								pass = true;
@@ -1966,6 +2153,10 @@ namespace wiz {
 									++i;
 								}
 
+								if (!Utility::ValidateUTF8(text, idx, len)) {
+									std::cout << "not valid char";
+								}
+
 								tokens[real_token_arr_count] = Get(idx, len, ch, option);
 								real_token_arr_count++;
 								pass = true;
@@ -1977,6 +2168,45 @@ namespace wiz {
 							if (idx != slush_start + 1) {
 								--i;
 							}
+							
+							long long back_slush_count = 0;
+
+							switch (text[slush_start + 1]) {
+							case '\"':
+							case '\\':
+							case '/':
+							case 'b':
+							case 'f':
+							case 'n':
+							case 'r':
+							case 't':
+								state = 1;
+								break;
+							case 'u':
+								back_slush_count = 4;
+								state = 1;
+								break;
+							default:
+								state = 1;
+								std::cout << "Syntax Error in pre-parsing0\n";
+								break;
+							}
+
+							for (long long k = 2; k < back_slush_count + 2; ++k) {
+								if (text[slush_start + k] >= '0' && text[slush_start + k] <= '9') {
+									//
+								}
+								else if (text[slush_start + k] >= 'a' && text[slush_start + k] <= 'f') {
+									//
+								}
+								else if (text[slush_start + k] >= 'A' && text[slush_start + k] <= 'F') {
+									//
+								}
+								else {
+									std::cout << "Syntax Error in pre-parsing0.5\n";
+								}
+							}
+
 							state = 1;
 						}
 						else if (2 == state && ('\n' == ch || '\0' == ch)) {
