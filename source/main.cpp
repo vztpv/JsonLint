@@ -11,7 +11,7 @@
 #include <set>
 
 
-#include "wiz/ClauText.h""
+#include "wiz/ClauText.h"
 
 
 #define ENTER '\n' // cf) std::endl
@@ -28,29 +28,23 @@ namespace Lint {
 	class Option
 	{
 	public:
-		enum class Type_ { ANY, INT, FLOAT, STRING, DATETIME, DATETIME_A, DATETIME_B };
-
-		enum class Id_ { NONE, ID, TOTAL_ID };
-		enum class OneMore_ { NONE, ONEMORE, JUSTONE };
+		enum class Type_ { ANY, INT, FLOAT, NUMBER, STRING, BOOLEAN, NULL_, };
+		enum class Id_ { NONE, ID };
 		enum class Required_ { REQUIRED, OPTIONAL_ };
-		enum class EmptyUT_ { NONE, OFF, ON };
-
-		enum class Order_ { NONE, OFF, ON }; // with global??
 		enum class Multiple_ { NONE, OFF, ON };
 	public:
 		std::vector<Type_> type;
 		Id_ id;
-		OneMore_ onemore;
-		EmptyUT_ empty_ut;
 		Required_ required;
+
 		std::vector<std::string> event_ids;
+		std::vector<std::string> enum_ids;
+		std::vector<std::string> style_ids;
 
 		std::string prefix;
 	public:
 		Option() : type(), id(Id_::NONE), 
-			onemore(OneMore_::NONE), 
-			required(Required_::REQUIRED),
-			empty_ut(EmptyUT_::NONE)
+			required(Required_::REQUIRED)
 		{
 			//
 		}
@@ -63,20 +57,20 @@ namespace Lint {
 			this->id = id;
 			return *this;
 		}
-		Option& OneMore(OneMore_ onemore) {
-			this->onemore = onemore;
-			return *this;
-		}
-		Option& EmptyUT(EmptyUT_ empty_ut) {
-			this->empty_ut = empty_ut;
-			return *this;
-		}
 		Option& Required(Required_ required) {
 			this->required = required;
 			return *this;
 		}
 		Option& Event(const std::string& event_id) {
 			this->event_ids.push_back(event_id);
+			return *this;
+		}
+		Option& Enum(const std::string& enum_id) {
+			this->enum_ids.push_back(enum_id);
+			return *this;
+		}
+		Option& Style(const std::string& style_id) {
+			this->style_ids.push_back(style_id);
 			return *this;
 		}
 	public:
@@ -120,32 +114,23 @@ namespace Lint {
 			else if ("%float"sv == opt) {
 				option.Type(Option::Type_::FLOAT);
 			}
+			else if ("%number"sv == opt) {
+				option.Type(Option::Type_::NUMBER);
+			}
+			else if ("%bool"sv == opt) {
+				option.Type(Option::Type_::BOOLEAN);
+			}
+			else if ("%null"sv == opt) {
+				option.Type(Option::Type_::NULL_);
+			}
 			else if ("%string"sv == opt) {
 				option.Type(Option::Type_::STRING);
-			}
-			else if ("%datetime"sv == opt) {
-				option.Type(Option::Type_::DATETIME);
-			}
-			else if ("%datetime_a"sv == opt) {
-				option.Type(Option::Type_::DATETIME_A);
-			}
-			else if ("%datetime_b"sv == opt) {
-				option.Type(Option::Type_::DATETIME_B);
 			}
 			else if ("%id"sv == opt) {
 				option.Id(Option::Id_::ID);
 			}
-			else if ("%total_id"sv == opt) {
-				option.Id(Option::Id_::TOTAL_ID);
-			}
 			else if ("%any"sv == opt) {
 				option.Type(Option::Type_::ANY);
-			}
-			else if ("%one_more"sv == opt) { // x = { 1 2 3 4  } -> x = { %int%one_more%event_plus_test }
-				option.OneMore(Option::OneMore_::ONEMORE);
-			}
-			else if ("%just_one"sv == opt) {
-				option.OneMore(Option::OneMore_::JUSTONE);
 			}
 			else if ("%optional"sv == opt) {
 				option.Required(Option::Required_::OPTIONAL_);
@@ -153,16 +138,20 @@ namespace Lint {
 			else if ("%required"sv == opt) {
 				option.Required(Option::Required_::REQUIRED);
 			}
-			else if ("%can_empty_ut"sv == opt) {
-				option.EmptyUT(Option::EmptyUT_::ON);
-			}
 			else if (wiz::String::startsWith(opt, "%event_")) { // size check?
 				std::string event_name = wiz::String::substring(opt, 7);
 				option.Event(std::move(event_name));
 			}
+			else if (wiz::String::startsWith(opt, "%enum_")) { // size check?
+				std::string enum_name = wiz::String::substring(opt, 6);
+				option.Enum(std::move(enum_name));
+			}
+			else if (wiz::String::startsWith(opt, "%style_")) {
+				option.Style(wiz::String::substring(opt, 7));
+			}
 			else {
 				std::cout << "wrong option" << ENTER;
-				exit(-2);
+				exit(-2); // throw -2?
 			}
 
 			start = end_;
@@ -195,7 +184,7 @@ namespace Lint {
 				// pass
 				break;
 			case Option::Type_::INT:
-				if (wiz::load_data::Utility::IsInteger(str)) {
+				if (wiz::load_data::Utility::IsIntegerInJson(str)) {
 					//
 				}
 				else {
@@ -204,38 +193,33 @@ namespace Lint {
 				}
 				break;
 			case Option::Type_::FLOAT:
-				if (wiz::load_data::Utility::IsDouble(str)) {
+				if (wiz::load_data::Utility::IsFloatInJson(str)) {
 					//
 				}
 				else {
-					std::cout << str << " is not double" << ENTER;
+					std::cout << str << " is not float" << ENTER;
 					count--;
 				}
 				break;
-			case Option::Type_::DATETIME:
-				if (wiz::load_data::Utility::IsDate(str)) {
+			
+			case Option::Type_::NUMBER:
+				if (wiz::load_data::Utility::IsNumberInJson(str)) {
 					//
 				}
 				else {
-					std::cout << str << " is not date" << ENTER;
+					std::cout << str << "is not number(integer + float)" << ENTER;
 					count--;
 				}
 				break;
-			case Option::Type_::DATETIME_A:
-				if (wiz::load_data::Utility::IsDateTimeA(str)) {
-					//
-				}
-				else {
-					std::cout << str << " is not datetime A" << ENTER;
+			case Option::Type_::BOOLEAN:
+				if (str != "true" && str != "false") {
+					std::cout << str << "is not boolean" << ENTER;
 					count--;
 				}
 				break;
-			case Option::Type_::DATETIME_B:
-				if (wiz::load_data::Utility::IsDateTimeB(str)) {
-					//
-				}
-				else {
-					std::cout << str << " is not datetime B" << ENTER;
+			case Option::Type_::NULL_:
+				if (str != "null") {
+					std::cout << str << "is not null" << ENTER;
 					count--;
 				}
 				break;
@@ -255,8 +239,10 @@ namespace Lint {
 		return count > 0;
 	}
 
-	std::tuple<bool, Option, Option> _Check(wiz::load_data::UserType* schema_eventUT,
-		const wiz::load_data::ItemType<WIZ_STRING_TYPE>& x, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& y, const std::string& real_dir) //, Order?
+	std::tuple<bool, Option, Option> _Check(wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& enumMap,
+		const std::map<std::string, wiz::load_data::UserType*>& styleMap,
+		const wiz::load_data::ItemType<WIZ_STRING_TYPE>& x, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& y, const std::string& real_dir,
+		std::vector<std::string>* name_style_vec, std::vector<std::string>* val_style_vec) //, Order?
 	{
 		const Option var_option = OptionFrom(x.GetName().ToString()); // name, value check - not start with % ??
 		const Option val_option = OptionFrom(x.Get(0).ToString());
@@ -276,8 +262,9 @@ namespace Lint {
 		}
 
 		// option type check.
-		const bool name_do = OptionDoA(var_option, y.GetName().ToString());
-		const bool val_do = OptionDoA(val_option, y.Get(0).ToString());
+		const bool name_do = (val_style_vec == nullptr)? true : OptionDoA(var_option, y.GetName().ToString());
+		const bool val_do = (name_style_vec == nullptr)? true : OptionDoA(val_option, y.Get(0).ToString());
+
 
 		if (name_do && val_do) {
 			// event check.
@@ -285,10 +272,11 @@ namespace Lint {
 
 			std::string event_name;
 
+			// event
 			for (auto& x : var_option.event_ids) {
 				event_name = x;
 				// for var // chk no start with __, no end with __ ?
-				wiz::load_data::LoadData::AddData(*schema_eventUT, "/./",
+				wiz::load_data::LoadData::AddData(*mainUT, "/./",
 					"Event = { id = __" + event_name + "__ $call = { id = " + event_name +
 					" name = " + y.GetName().ToString() + " value = " + y.Get(0).ToString() +
 					" is_usertype = FALSE " +
@@ -298,11 +286,11 @@ namespace Lint {
 					" } }",
 					wiz::ExecuteData());
 
-				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", schema_eventUT, wiz::ExecuteData(), opt, 1)) {
-					schema_eventUT->RemoveUserTypeList(schema_eventUT->GetUserTypeListSize() - 1);
+				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", mainUT, wiz::ExecuteData(), opt, 1)) {
+					mainUT->RemoveUserTypeList(mainUT->GetUserTypeListSize() - 1);
 				}
 				else {
-					schema_eventUT->RemoveUserTypeList(schema_eventUT->GetUserTypeListSize() - 1);
+					mainUT->RemoveUserTypeList(mainUT->GetUserTypeListSize() - 1);
 
 					std::cout << "clauText is not valid1" << ENTER;
 					return { false, var_option, val_option };
@@ -312,7 +300,7 @@ namespace Lint {
 				event_name = x;
 
 				// for val
-				wiz::load_data::LoadData::AddData(*schema_eventUT, "/./",
+				wiz::load_data::LoadData::AddData(*mainUT, "/./",
 					"Event = { id = __" + event_name + "__ $call = { id = " + event_name +
 					" name = " + y.GetName().ToString() + " value = " + y.Get(0).ToString() +
 					" is_usertype = FALSE " +
@@ -322,13 +310,154 @@ namespace Lint {
 					" } }",
 					wiz::ExecuteData());
 
-				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", schema_eventUT, wiz::ExecuteData(), opt, 1)) {
-					schema_eventUT->RemoveUserTypeList(schema_eventUT->GetUserTypeListSize() - 1);
+				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", mainUT, wiz::ExecuteData(), opt, 1)) {
+					mainUT->RemoveUserTypeList(mainUT->GetUserTypeListSize() - 1);
 				}
 				else {
-					schema_eventUT->RemoveUserTypeList(schema_eventUT->GetUserTypeListSize() - 1);
+					mainUT->RemoveUserTypeList(mainUT->GetUserTypeListSize() - 1);
 
 					std::cout << "clauText is not valid2" << ENTER;
+					return { false, var_option, val_option };
+				}
+			}
+
+			// enum 
+		// ex)
+		//	Enum = {
+		//		id = x
+
+		//		1 2 3 4
+		//	  }
+			for (auto& id : var_option.enum_ids) {
+				auto enumUT = enumMap.at(id);
+
+				bool found = false;
+				size_t start = 0, last = enumUT->GetItemListSize() - 1;
+				while (start <= last) {
+					size_t middle = (start + last) / 2; // chk overflow...
+					auto middle_item = enumUT->GetItemList(middle).Get();
+					int diff = middle_item.ToString().compare(y.GetName().ToString());
+
+					if (diff == 0) {
+						found = true;
+						break;
+					}
+					else if (diff < 0) {
+						start = middle + 1;
+					}
+					else {
+						if (0 == middle) {
+							break;
+						}
+						last = middle - 1;
+					}
+					middle = (start + last) / 2; //
+				}
+				if (!found) {
+					std::cout << "clauText is not valid2.5" << ENTER;
+					return { false, var_option, val_option };
+				}
+			}
+			for (auto& id : val_option.enum_ids) {
+				auto enumUT = enumMap.at(id);
+
+				bool found = false;
+				size_t start = 0, last = enumUT->GetItemListSize() - 1;
+				while (start <= last) {
+					size_t middle = (start + last) / 2; // chk overflow...
+					auto middle_item = enumUT->GetItemList(middle).Get();
+					int diff = middle_item.ToString().compare(y.GetName().ToString());
+
+					if (diff == 0) {
+						found = true;
+						break;
+					}
+					else if (diff < 0) {
+						start = middle + 1;
+					}
+					else {
+						if (0 == middle) {
+							break;
+						}
+						last = middle - 1;
+					}
+					middle = (start + last) / 2; //
+				}
+				if (!found) {
+					std::cout << "clauText is not valid2.5" << ENTER;
+					return { false, var_option, val_option };
+				}
+			}
+
+			// style
+		//	Style = {
+	//			id = x
+//
+		//		%multiple
+		//		%optional
+		//		%event_int_string = { }
+	//			%event_list_sum_larger_than = { n = /./x }
+		//	}
+
+			if (name_style_vec) {
+				std::sort(name_style_vec->begin(), name_style_vec->end());
+
+				std::string result;
+				auto styles = *name_style_vec;
+				for (auto& id : var_option.style_ids) {
+					if (std::binary_search(styles.begin(), styles.end(), id)) {
+						throw "clauText Schema`s style is wrong.";
+					}
+
+					auto styleUT = styleMap.at(id);
+					styles.push_back(id);
+
+					for (size_t i = 0; i < styleUT->GetItemListSize(); ++i) {
+						result += styleUT->GetItemList(i).Get().ToString();
+					}
+
+					for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
+						result += styleUT->GetUserTypeList(i)->GetName().ToString();
+						wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
+
+						result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
+						result += "\'";
+					}
+				}
+				if (!std::get<0>(_Check(mainUT, enumMap, styleMap, wiz::load_data::ItemType<WIZ_STRING_TYPE>("", result), y, real_dir,
+					&styles, nullptr))) {
+					std::cout << "clauText is not valid2.6" << ENTER;
+					return { false, var_option, val_option };
+				}
+			}
+			if (val_style_vec) {
+				std::sort(val_style_vec->begin(), val_style_vec->end());
+
+				std::string result;
+				auto styles = *val_style_vec;
+				for (auto& id : val_option.style_ids) {
+					if (std::binary_search(styles.begin(), styles.end(), id)) {
+						throw "clauText Schema`s style is wrong.2.65";
+					}
+
+					auto styleUT = styleMap.at(id);
+					styles.push_back(id);
+
+					for (size_t i = 0; i < styleUT->GetItemListSize(); ++i) {
+						result += styleUT->GetItemList(i).Get().ToString();
+					}
+
+					for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
+						result += styleUT->GetUserTypeList(i)->GetName().ToString();
+						wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
+
+						result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
+						result += "\'";
+					}
+				}
+				if (!std::get<0>(_Check(mainUT, enumMap, styleMap, wiz::load_data::ItemType<WIZ_STRING_TYPE>("", result), y, real_dir,
+					nullptr, &styles))) {
+					std::cout << "clauText is not valid2.7" << ENTER;
 					return { false, var_option, val_option };
 				}
 			}
@@ -340,28 +469,30 @@ namespace Lint {
 		return { true, var_option, val_option };
 	}
 
-	std::tuple<bool, Option> _Check(wiz::load_data::UserType* schema_eventUT,
-		const wiz::load_data::UserType* x, const wiz::load_data::UserType* y, const std::string& real_dir // Order?
+	std::tuple<bool, Option> _Check(wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& enumMap,
+		const std::map<std::string, wiz::load_data::UserType*>& styleMap,
+		const wiz::load_data::UserType& x, const wiz::load_data::UserType& y, 
+		const std::string& real_dir, std::vector<std::string>* name_style_vec
 	)
 	{
-		Option var_option = OptionFrom(x->GetName().ToString()); // name, value check - not start with % ??
+		Option var_option = OptionFrom(x.GetName().ToString()); // name, value check - not start with % ??
 
 		// val only case, ex) A = { a b c d } , a, b, c, d `s name is empty.
-		if (x->GetName().ToString().empty()) {
-			if (!y->GetName().ToString().empty()) {
+		if (x.GetName().ToString().empty()) {
+			if (!y.GetName().ToString().empty()) {
 				//
 				return{ false, var_option };
 			}
 		}
 		else { // bug?
-			if (!y || y->GetName().ToString().empty()) {
+			if (y.GetName().ToString().empty()) {
 				//
 				return{ false, var_option };
 			}
 		}
 
 		// option type check.
-		const bool name_do = OptionDoA(var_option, y->GetName().ToString());
+		const bool name_do = OptionDoA(var_option, y.GetName().ToString());
 
 		if (name_do) {
 			// event check.
@@ -372,23 +503,86 @@ namespace Lint {
 				event_name = x;
 
 				// for var // chk no start with __, no end with __ ?
-				wiz::load_data::LoadData::AddData(*schema_eventUT, "/./",
+				wiz::load_data::LoadData::AddData(*mainUT, "/./",
 					"Event = { id = __" + event_name + "__ $call = { id = " + event_name +
-					" name = " + y->GetName().ToString() +
+					" name = " + y.GetName().ToString() +
 					" is_usertype = TRUE " +
 					" real_dir = " + real_dir +
 					" select = NAME " +
-					" input = " + y->GetName().ToString() +
+					" input = " + y.GetName().ToString() +
 					"}  } ",
 					wiz::ExecuteData());
 
-				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", schema_eventUT, wiz::ExecuteData(), opt, 1)) {
-					schema_eventUT->RemoveUserTypeList(schema_eventUT->GetUserTypeListSize() - 1);
+				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", mainUT, wiz::ExecuteData(), opt, 1)) {
+					mainUT->RemoveUserTypeList(mainUT->GetUserTypeListSize() - 1);
 				}
 				else {
-					schema_eventUT->RemoveUserTypeList(schema_eventUT->GetUserTypeListSize() - 1);
+					mainUT->RemoveUserTypeList(mainUT->GetUserTypeListSize() - 1);
 
 					std::cout << "clauText is not valid3" << ENTER;
+					return { false, var_option };
+				}
+			}
+
+			for (auto& id : var_option.enum_ids) {
+				auto enumUT = enumMap.at(id);
+
+				bool found = false;
+				size_t start = 0, last = enumUT->GetItemListSize() - 1;
+				while (start <= last) {
+					size_t middle = (start + last) / 2; // chk overflow...
+					auto middle_item = enumUT->GetItemList(middle).Get();
+					int diff = middle_item.ToString().compare(y.GetName().ToString());
+
+					if (diff == 0) {
+						found = true;
+						break;
+					}
+					else if (diff < 0) {
+						start = middle + 1;
+					}
+					else {
+						if (0 == middle) {
+							break;
+						}
+						last = middle - 1;
+					}
+					middle = (start + last) / 2; //
+				}
+				if (!found) {
+					std::cout << "clauText is not valid3.5" << ENTER;
+					return { false, var_option };
+				}
+			}
+
+			{
+				std::sort(name_style_vec->begin(), name_style_vec->end());
+
+				std::string result;
+				auto styles = *name_style_vec;
+				for (auto& id : var_option.style_ids) {
+					if (std::binary_search(styles.begin(), styles.end(), id)) {
+						throw "clauText Schema`s style is wrong.3.55";
+					}
+
+					auto styleUT = styleMap.at(id);
+					styles.push_back(id);
+
+					for (size_t i = 0; i < styleUT->GetItemListSize(); ++i) {
+						result += styleUT->GetItemList(i).Get().ToString();
+					}
+
+					for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
+						result += styleUT->GetUserTypeList(i)->GetName().ToString();
+						wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
+
+						result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
+						result += "\'";
+					}
+				}
+				if (!std::get<0>(_Check(mainUT, enumMap, styleMap, wiz::load_data::UserType(result), y, real_dir,
+					&styles))) {
+					std::cout << "clauText is not valid3.6" << ENTER;
 					return { false, var_option };
 				}
 			}
@@ -400,21 +594,42 @@ namespace Lint {
 		return { true, var_option };
 	}
 
-	// varaible!
-	std::set<std::tuple<std::string, std::string, std::string>> check_total_id;
-
-	bool Check(wiz::load_data::UserType* schema_eventUT, wiz::load_data::UserType* schemaUT,
+	bool Check(wiz::load_data::UserType* mainUT, wiz::load_data::UserType* schemaUT,
 		wiz::load_data::UserType* clautextUT, int depth, bool& log_on, bool is_optional = false)
 	{
+		// init
+		std::map<std::string, wiz::load_data::UserType*> styleMap;
+		std::map<std::string, wiz::load_data::UserType*> enumMap;
+
+		{
+			auto temp = mainUT->GetUserTypeItem("Style");
+			for (size_t i = 0; i < temp.size(); ++i) {
+				std::string name = temp[i]->GetItem("id")[0].ToString();
+				styleMap.insert(std::make_pair(std::move(name), temp[i]));
+			}
+		}
+
+		{
+			auto temp = mainUT->GetUserTypeItem("Enum");
+			for (size_t i = 0; i < temp.size(); ++i) {
+				std::string name = temp[i]->GetItem("id")[0].ToString();
+				styleMap.insert(std::make_pair(std::move(name), temp[i]));
+			}
+		}
+
+		// loop
+
+		// test
+		std::cout << "chk " << wiz::load_data::Utility::Equal("abc def", "abc\u0021def") << ENTER;
 
 
 		return true;
 	}
 
-	inline bool _Validate(const wiz::load_data::UserType& schemaFileUT)
+	inline bool _Validate(const wiz::load_data::UserType& _mainUT)
 	{
 		wiz::load_data::UserType* clautextUT;
-		wiz::load_data::UserType schema_eventUT = schemaFileUT;
+		wiz::load_data::UserType mainUT = _mainUT;
 		wiz::load_data::UserType* schemaUT;
 
 		// __init__ first init.
@@ -422,7 +637,7 @@ namespace Lint {
 		std::string schema_name;
 		{
 			wiz::ClauText clauText;
-			std::string str = clauText.excute_module("Main = { $call = { id = __init__ } }", &schema_eventUT, wiz::ExecuteData(), opt, 1); // 0 (remove events) -> 1 (revoke events?)
+			std::string str = clauText.excute_module("Main = { $call = { id = __init__ } }", &mainUT, wiz::ExecuteData(), opt, 1); // 0 (remove events) -> 1 (revoke events?)
 
 			{
 				wiz::load_data::UserType temp;
@@ -438,18 +653,18 @@ namespace Lint {
 			}
 		}
 
-		clautextUT = wiz::load_data::UserType::Find(&schema_eventUT, start_name).second[0];
-		schemaUT = wiz::load_data::UserType::Find(&schema_eventUT, schema_name).second[0];
+		clautextUT = wiz::load_data::UserType::Find(&mainUT, start_name).second[0];
+		schemaUT = wiz::load_data::UserType::Find(&mainUT, schema_name).second[0];
 
 
 		// for log?
 		bool log_on = false;
-		const bool chk = Check(&schema_eventUT, schemaUT, clautextUT, 0, log_on);
+		const bool chk = Check(&mainUT, schemaUT, clautextUT, 0, log_on);
 
 		{
 			wiz::ClauText clauText;
 
-			clauText.excute_module("Main = { $call = { id = __end__ } }", &schema_eventUT, wiz::ExecuteData(), opt, 1); // 0 (remove events) -> 1 (revoke events?)
+			clauText.excute_module("Main = { $call = { id = __end__ } }", &mainUT, wiz::ExecuteData(), opt, 1); // 0 (remove events) -> 1 (revoke events?)
 		}
 
 		//// debug
