@@ -201,7 +201,7 @@
         },
         %multiple : {
           %style_x : [		
-            %multiple%event_int%array_x%id
+            %multiple%event_int%enum_x%id
             #%id_A, %id_B
           ]
         }
