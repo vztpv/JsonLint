@@ -3497,7 +3497,7 @@ namespace wiz {
 
 			static WIZ_STRING_TYPE ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const wiz::load_data::UserType& temp, const ExecuteData& excuteData);
 			static WIZ_STRING_TYPE ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& temp, const ExecuteData& excuteData);
-		private:
+		//private:
 			static WIZ_STRING_TYPE _ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const wiz::load_data::UserType& temp, const ExecuteData& excuteData);
 			static WIZ_STRING_TYPE ToBool4(wiz::load_data::UserType* now, wiz::load_data::UserType& global, const std::string& temp, const ExecuteData& excuteData);
 		};

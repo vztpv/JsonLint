@@ -268,7 +268,7 @@ namespace wiz {
 			static void ScanningNew(const char* text, const long long length, const int thr_num,
 				long long*& _token_arr, long long& _token_arr_size, const LoadDataOption& option)
 			{
-				std::vector<std::thread> thr(thr_num);
+				std::vector<std::thread*> thr(thr_num);
 				std::vector<long long> start(thr_num);
 				std::vector<long long> last(thr_num);
 
@@ -306,11 +306,12 @@ namespace wiz {
 				std::vector<long long> token_arr_size(thr_num);
 
 				for (int i = 0; i < thr_num; ++i) {
-					thr[i] = std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]), option);
+					thr[i] = new std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]), std::cref(option));
 				}
 
 				for (int i = 0; i < thr_num; ++i) {
-					thr[i].join();
+					thr[i]->join();
+					delete thr[i];
 				}
 
 				{
@@ -894,7 +895,7 @@ namespace wiz {
 				std::vector<long long> token_arr_size(thr_num);
 
 				for (int i = 0; i < thr_num; ++i) {
-					thr[i] = std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]), option);
+					thr[i] = std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]), std::cref(option));
 				}
 
 				for (int i = 0; i < thr_num; ++i) {
@@ -2015,7 +2016,7 @@ namespace wiz {
 				else {
 					for (int i = 0; i < thr_num; ++i) {
 						thr[i] = std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]),
-							option, i == 0, thr_num - 1 == i);
+							std::cref(option), i == 0, thr_num - 1 == i);
 					}
 
 					for (int i = 0; i < thr_num; ++i) {
