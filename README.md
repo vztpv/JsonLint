@@ -201,8 +201,8 @@
                 "e" : [ %int%id_B , %int%id_B ]		
             },
             %multiple : {
-                %style_x : [		
-                    %multiple%event_int%enum_x%id
+                %style_x%different_values : [		
+                    %multiple%event_int%enum_x
                     #%id_A, %id_B
                 ]
             }
