@@ -11,24 +11,25 @@ Event = {
 	id = __init__  # special event. // before validation.
 	
 	# for output to console, output to file.
-	$encoding_utf-8 = { }
+	$encoding_utf-8 = { } 
+			# in jsonLint Defualt is utf-8?
 	
 	# LoadData
-	$load = { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\b.txt" } 
+	$load = { "b.txt" } 
 	
 	# LoadData->LoadData2
-	$load_json = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\a.json" }  { data } }
-	
-	# todo - LoadData2? : 333'dddd'333 -> one token, 
-	# todo - # line comment, // line comment, /* */ comment,
+	$load_json = { { "a.json" }  { data } }
+	#$load_json = { { "C:\Users\vztpv\source\repos\ClauJson\ClauJson\input.json" }  { data } }
+	#  - LoadData2? : 333'dddd'333 -> one token, 
+	#  - # line comment, // line comment, /* */ comment,
 	# clau test parer + clauText + claujson..
 	
-	$load_my_json_schema = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\schema.txt" } { schema } }
+	$load_my_json_schema = { { "schema.txt" } { schema } }
 	
-	$print = { { "init end.." } }
+	$print = { { "init.." } }
 	$print = { enter = { \n } }
 	
-	$print2 = { { /./schema } }
+	# $print2 = { { /./ } }
 	
 	$return = { data schema } # returns folder names?
 }
@@ -36,12 +37,13 @@ Event = {
 Event = {
 	id = __end__ # special event. // after validation
 	
+	$print = { enter = { \n } }
 	$print = { data = { "end__" } }
 	$print = { enter = { \n } }
 	$_getch = { }
 }
 
-x = 10
+x = 1
 
 Style = {
 	id = x
@@ -55,5 +57,5 @@ Style = {
 Enum = {
 	id = x
 	
-	1 2 3 4
+	1 2 3 4 5
 }

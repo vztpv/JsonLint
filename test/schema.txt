@@ -1,5 +1,4 @@
-﻿
-{
+﻿{
 	$log : on, // comment 
 	#"abc" : "aaaa"dddd'eee'"333",
 	"xxx"%optional : %int%event_larger_than@'n = 300',  # ' '
@@ -9,16 +8,17 @@
 		"z" : { 
 			%event_int_string%multiple : [ 3 ],
 			
-			"c" : [ %int ] ,
-			"d" : [ %int ] , 
+			"c" : [ %int%id_B ] ,
+			"d" : [ %int%id_B ] , 
 			/*  
 				comment
 			*/
-			"e" : [ %int , %int ]		
+			"e" : [ %int%id_B , %int%id_B ]		
 		},
 		%multiple : {
 			%style_x : [		
-				%multiple%event_int%array_x%total_id
+				%multiple%event_int%enum_x%id
+				#%id_A, %id_B
 			]
 		}
 	}

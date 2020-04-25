@@ -1,9 +1,9 @@
 ﻿
 Event = { 
-	id = list_sum_larger_than_10
+	id = list_sum_larger_than
 	
 	$local = { sum i }
-	$parameter = { name value is_usertype real_dir } 
+	$parameter = { n name value is_usertype real_dir } 
 	
 	$assign = { $local.sum { 0 } }
 	$assign = { $local.i { 0 } }
@@ -26,13 +26,14 @@ Event = {
 		cond = {
 			$COMP> = {
 				$local.sum
-				10
+				$parameter.n
 			}
 		}
 		then = {
 			$return = { TRUE }
 		}
 	}
+	$print = { { $parameter.real_dir } } 
 	$return = { FALSE }
 }
 
