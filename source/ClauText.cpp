@@ -135,9 +135,6 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					if (wiz::load_data::LoadData::LoadDataFromFile(fileName, ut)) {
 						{
-							for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-								utTemp->PushComment(std::move(ut.GetCommentList(i)));
-							}
 							int item_count = 0;
 							int userType_count = 0;
 
@@ -1673,9 +1670,6 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 
 					if (wiz::load_data::LoadData::LoadDataFromFile(fileName, ut)) {
 						{
-							for (int i = 0; i < ut.GetCommentListSize(); ++i) {
-								utTemp->PushComment(std::move(ut.GetCommentList(i)));
-							}
 							int item_count = 0;
 							int userType_count = 0;
 
@@ -2337,17 +2331,6 @@ void SaveWithOutEvent(std::ostream& stream, wiz::load_data::UserType* ut, int de
 {
 	int itemListCount = 0;
 	int userTypeListCount = 0;
-
-	for (int i = 0; i < ut->GetCommentListSize(); ++i) {
-		for (int k = 0; k < depth; ++k) {
-			stream << "\t";
-		}
-		stream << (ut->GetCommentList(i));
-
-		if (i < ut->GetCommentListSize() - 1 || 0 == ut->GetIListSize()) {
-			stream << "\n";
-		}
-	}
 
 	for (int i = 0; i < ut->GetIListSize(); ++i) {
 		//wiz::Out << "ItemList" << endl;

@@ -96,6 +96,9 @@ namespace wiz {
 
 	DataType::DataType(const char* cstr, size_t len)
 	{
+		if (len <= 0) {
+			std::cout << "chk\n";
+		}
 		this->str_value = std::string(cstr, len);
 
 		if (USE_REMOVE_IN_DATATYPE) {

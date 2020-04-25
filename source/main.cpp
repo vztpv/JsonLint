@@ -44,7 +44,8 @@ namespace Lint {
 		std::string prefix;
 	public:
 		Option() : type(), id(Id_::NONE), 
-			required(Required_::REQUIRED)
+			required(Required_::REQUIRED),
+			multiple(Multiple_::OFF)
 		{
 			//
 		}
@@ -1050,8 +1051,7 @@ namespace Lint {
 int main(int argc, char* argv[])
 {
 	std::string option;
-	wiz::load_data::UserType schema; // argv[3]?
-	wiz::load_data::UserType clautext; // argv[2]
+	wiz::load_data::UserType fileUT;
 	std::string fileName; // to save
 
 	try {
@@ -1061,13 +1061,10 @@ int main(int argc, char* argv[])
 		if (argc == 3 && 0 == strcmp("-V", argv[1])) {
 			option = "-V";
 
-			//auto chk_clautext = Lint::LoadFile(argv[2]);
-			auto chk_schema = Lint::LoadFile(
-				//"C:\\Users\\vztpv\\Desktop\\Clau\\ClauText\\c.txt"); //
-				argv[2]); // 3 -> 2
+			auto chk_file = Lint::LoadFile(argv[2]);
 
-			if (chk_schema.first) {
-				schema = std::move(chk_schema.second);
+			if (chk_file.first) {
+				fileUT = std::move(chk_file.second);
 			}
 			else {
 				std::cout << "schema load fail" << ENTER;
@@ -1081,23 +1078,9 @@ int main(int argc, char* argv[])
 			//	return 2;
 			//}
 		}
-		else if (argc == 4 && 0 == strcmp("-M", argv[1])) {
-			option = "-M";
-
-			auto chk_clautext = Lint::LoadFile(argv[2]);
-
-			if (chk_clautext.first) {
-				clautext = std::move(chk_clautext.second);
-			}
-			else {
-				std::cout << "clautext load fail" << ENTER;
-				return 3;
-			}
-			fileName = argv[3];
-		}
 
 		if (option == "-V") {
-			auto chk = Lint::Validate(schema);
+			auto chk = Lint::Validate(fileUT);
 			if (chk) {
 				std::cout << ENTER << "success" << ENTER;
 			}
