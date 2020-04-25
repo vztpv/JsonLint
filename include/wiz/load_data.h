@@ -83,7 +83,7 @@ namespace wiz {
 		int iElement; // 2 : userType, // 1 : item
 		size_t idx; // for stable? - chk!!
 	public:
-		SortInfo(wiz::StringBuilder* builder = nullptr) : idx(-1) { }
+		SortInfo(wiz::StringBuilder* builder = nullptr) : idx(-1), iElement(-1) { }
 		SortInfo(const std::string& data, int iElement, size_t idx)
 			: data(data), iElement(iElement), idx(idx)
 		{
@@ -119,7 +119,7 @@ namespace wiz {
 		int iElement; // 2 : userType, // 1 : item
 		size_t idx; // for stable? - chk!!
 	public:
-		SortInfo2(wiz::StringBuilder* builder = nullptr) : idx(-1) { }
+		SortInfo2(wiz::StringBuilder* builder = nullptr) : idx(-1), iElement(-1) { }
 
 		SortInfo2(const std::string& data, int iElement, size_t idx)
 			: data(data), iElement(iElement), idx(idx)
@@ -1210,8 +1210,6 @@ namespace wiz {
 					InFileReserver ifReserver(str);
 					wiz::load_data::LoadDataOption option;
 
-					char* buffer = nullptr;
-					ifReserver.Num = 1 << 19;
 					//	strVec.reserve(ifReserver.Num);
 					// cf) empty file..
 					if (false == _LoadData(ifReserver, globalTemp, option, 1, 1))
@@ -1333,7 +1331,7 @@ namespace wiz {
 				if (token_arr_len <= 0) {
 					return false;
 				}
-
+				
 				UserType& global = *_global;
 				wiz::load_data::LoadDataOption option = *_option;
 
@@ -1662,7 +1660,7 @@ namespace wiz {
 				if (token_arr_len < 1000) {
 					int err;
 					UserType _global;
-					UserType* next;
+					UserType* next = nullptr;
 
 					__LoadData(buffer, token_arr, token_arr_len, &_global, &option, 0, 0, &next, &err);
 
@@ -1846,7 +1844,6 @@ namespace wiz {
 					InFileReserver ifReserver(inFile);
 					wiz::load_data::LoadDataOption option;
 
-					char* buffer = nullptr;
 					ifReserver.Num = 1 << 19;
 					//	strVec.reserve(ifReserver.Num);
 					// cf) empty file..
@@ -2729,7 +2726,7 @@ namespace wiz {
 				if (finded.first) {
 					for (int i = 0; i < finded.second.size(); ++i) {
 						int item_n = utTemp.GetIListSize();
-						int user_n = utTemp.GetIListSize();
+						int user_n = utTemp.GetUserTypeListSize();
 
 						
 						for (int k = utTemp.GetIListSize() - 1; k >= 0; --k) {

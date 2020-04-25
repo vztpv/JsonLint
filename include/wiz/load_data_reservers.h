@@ -101,8 +101,8 @@ namespace wiz {
 			static bool IsToken2(long long x) {
 				return (x & 1);
 			}
-			static void _Scanning(const char* text, long long num, const long long length,
-				long long*& token_arr, long long& _token_arr_size, const LoadDataOption& option) {
+			static void _Scanning(const char* text, const long long num, const long long length,
+				long long* token_arr, long long& _token_arr_size, const LoadDataOption& option) {
 
 				long long token_arr_size = 0;
 
@@ -306,7 +306,7 @@ namespace wiz {
 				std::vector<long long> token_arr_size(thr_num);
 
 				for (int i = 0; i < thr_num; ++i) {
-					thr[i] = new std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]), std::cref(option));
+					thr[i] = new std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], tokens, std::ref(token_arr_size[i]), std::cref(option));
 				}
 
 				for (int i = 0; i < thr_num; ++i) {
@@ -518,8 +518,6 @@ namespace wiz {
 					return { false, 0 };
 				}
 
-				long long* arr_count = nullptr; //
-				long long arr_count_size = 0;
 
 				std::string temp;
 				char* buffer = nullptr;
@@ -571,9 +569,7 @@ namespace wiz {
 			static std::pair<bool, int> Scan(const int num, const wiz::load_data::LoadDataOption& option, int thr_num,
 				const std::string& str, long long* _buffer_len, long long*& _token_arr, long long* _token_arr_len)
 			{
-				long long* arr_count = nullptr; //
-				long long arr_count_size = 0;
-
+				
 				const char* buffer = nullptr;
 				
 				long long file_length;
@@ -628,7 +624,6 @@ namespace wiz {
 				pInFile = &inFile;
 				Num = 1;
 			}
-			bool end()const { return pInFile->eof(); } //
 		public:
 			bool operator() (const wiz::load_data::LoadDataOption& option, int thr_num, const char*& buffer, long long* buffer_len, long long*& token_arr, long long* token_arr_len)
 			{
@@ -1602,8 +1597,6 @@ namespace wiz {
 					return { false, 0 };
 				}
 
-				long long* arr_count = nullptr; //
-				long long arr_count_size = 0;
 
 				std::string temp;
 				char* buffer = nullptr;
@@ -2403,8 +2396,6 @@ namespace wiz {
 					return { false, 0 };
 				}
 
-				long long* arr_count = nullptr; //
-				long long arr_count_size = 0;
 
 				std::string temp;
 				char* buffer = nullptr;

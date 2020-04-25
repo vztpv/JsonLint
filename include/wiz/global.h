@@ -141,7 +141,7 @@ namespace wiz {
 		DataType(const char* cstr, size_t len);
 		DataType(const std::string& str);
 		DataType(std::string&& str);
-		~DataType() {
+		virtual ~DataType() {
 			//
 		}
 	public:

@@ -854,8 +854,8 @@ namespace wiz {
 					std::string z = Compare(x, y, "INTEGER", "INTEGER");
 					if ("== 0" == z)
 					{
-						x = str1; x.substr(x_pos + 1);
-						y = str2; y.substr(y_pos + 1);
+						x = str1; x = x.substr(x_pos + 1);
+						y = str2; y = y.substr(y_pos + 1);
 
 						if (x.size() < y.size()) {
 							while (x.size() < y.size()) {
@@ -1035,7 +1035,9 @@ namespace wiz {
 			}
 
 		public:
+#ifdef _WIN32
 			inline static UINT defaultConsoleEncoding = GetConsoleOutputCP();
+#endif
 		};
 	}
 }
