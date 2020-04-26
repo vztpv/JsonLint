@@ -25,8 +25,8 @@ namespace wiz {
 			static char convert(const char* arr) {
 				char sum = 0;
 				for (int i = 0; i < 8; ++i) {
-					sum += arr[i] - '0';
 					sum = sum << 1;
+					sum += arr[i] - '0';
 				}
 				return sum;
 			}
@@ -117,12 +117,12 @@ namespace wiz {
 				long long temp_idx = -1;
 
 				for (size_t i = 0; i < temp.size(); ++i) {
+					sum = sum << 1;
 					if (!pass && temp[i] == '1') {
 						temp_idx = i;
 						pass = true;
 					}
 					sum += temp[i] - '0';
-					sum = sum << 1;
 				}
 
 				if (sum < 0x0080) {
@@ -175,13 +175,31 @@ namespace wiz {
 				return result;
 			}
 			
+			static std::string Convert(std::string str) {
+				int start = 0;
+				do {    // \u0020
+					int idx = String::find(str, "\\u", start);
+					if (idx != -1) {
+						std::string temp = Convert(str, idx + 2);
+						str = str.substr(0, idx) + temp + str.substr(idx + 6);
+						start = idx + temp.size();
+					}
+					else {
+						break;
+					}
+				} while (true);
+				
+				return str;
+			}
+
 			static bool Equal(std::string str1, std::string str2) {
 				int start = 0;
 				do {
 					int idx = String::find(str1, "\\u", start);
 					if (idx != -1) {
-						str1 = str1.substr(0, idx - 1) + Convert(str1, idx + 2) + str1.substr(idx + 6);
-						start = idx + 6;
+						std::string temp = Convert(str1, idx + 2);
+						str1 = str1.substr(0, idx) + temp + str1.substr(idx + 6);
+						start = idx + temp.size();
 					}
 					else {
 						break;
@@ -191,8 +209,9 @@ namespace wiz {
 				do {
 					int idx = String::find(str2, "\\u", start);
 					if (idx != -1) {
-						str2 = str2.substr(0, idx - 1) + Convert(str2, idx + 2) + str2.substr(idx + 6);
-						start = idx + 6;
+						std::string temp = Convert(str2, idx + 2);
+						str2 = str2.substr(0, idx) + temp + str2.substr(idx + 6);
+						start = idx + temp.size();
 					}
 					else {
 						break;

@@ -1886,7 +1886,7 @@ namespace wiz {
 							token_first = i + 1;
 							token_last = i + 1;
 						}
-						else if (option.Left == ch) {
+						else if (option.Left == ch || option.Left2 == ch) {
 							token_last = i - 1;
 							if (token_last - token_first + 1 > 0) {
 								token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -1902,7 +1902,7 @@ namespace wiz {
 							token_first = i + 1;
 							token_last = i + 1;
 						}
-						else if (option.Right == ch) {
+						else if (option.Right == ch || option.Right2 == ch) {
 							token_last = i - 1;
 							if (token_last - token_first + 1 > 0) {
 								token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);

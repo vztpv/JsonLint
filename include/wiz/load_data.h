@@ -393,6 +393,18 @@ namespace wiz {
 								for (size_t x = 0; x < varVec.size(); ++x) {
 									nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]),
 										buffer + GetIdx(valVec[x]), GetLength(valVec[x]));
+									{
+										std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).GetName().ToString();
+										temp = wiz::load_data::Utility::Convert(std::move(temp));
+
+										nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).SetName(wiz::DataType(temp));
+									}
+									{
+										std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).Get().ToString();
+										temp = wiz::load_data::Utility::Convert(std::move(temp));
+
+										nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).Set(0, wiz::DataType(temp));
+									}
 								}
 
 								varVec.clear();
@@ -431,6 +443,18 @@ namespace wiz {
 									for (size_t x = 0; x < varVec.size(); ++x) {
 										nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]),
 											buffer + GetIdx(valVec[x]), GetLength(valVec[x]));
+										{
+											std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).GetName().ToString();
+											temp = wiz::load_data::Utility::Convert(std::move(temp));
+
+											nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).SetName(wiz::DataType(temp));
+										}
+										{
+											std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).Get().ToString();
+											temp = wiz::load_data::Utility::Convert(std::move(temp));
+
+											nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).Set(0, wiz::DataType(temp));
+										}
 									}
 								}
 
@@ -533,6 +557,19 @@ namespace wiz {
 							for (size_t x = 0; x < varVec.size(); ++x) {
 								nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]),
 									buffer + GetIdx(valVec[x]), GetLength(valVec[x]));
+
+								{
+									std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).GetName().ToString();
+									temp = wiz::load_data::Utility::Convert(std::move(temp));
+
+									nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).SetName(wiz::DataType(temp));
+								}
+								{
+									std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).Get().ToString();
+									temp = wiz::load_data::Utility::Convert(std::move(temp));
+
+									nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).Set(0, wiz::DataType(temp));
+								}
 							}
 
 
@@ -542,6 +579,16 @@ namespace wiz {
 							///
 							{
 								nestedUT[braceNum]->AddUserTypeItem(UserType(buffer + GetIdx(var), GetLength(var)));
+
+								{
+									{
+										std::string temp = nestedUT[braceNum]->GetUserTypeList(nestedUT[braceNum]->GetUserTypeListSize() - 1)->GetName().ToString();
+										temp = wiz::load_data::Utility::Convert(std::move(temp));
+
+										nestedUT[braceNum]->GetUserTypeList(nestedUT[braceNum]->GetUserTypeListSize() - 1)->SetName(wiz::DataType(temp));
+									}
+								}
+
 								UserType* pTemp = nestedUT[braceNum]->GetUserTypeList(nestedUT[braceNum]->GetUserTypeListSize() - 1);
 								var = 0;
 								braceNum++;
