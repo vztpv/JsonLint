@@ -1,5 +1,7 @@
-﻿{
-	$log : on, // comment 
+﻿
+{
+	$id : [ A, B ], 
+	$log : on, // comment  $log : off
 	#"abc" : "aaaa"dddd'eee'"333",
 	"xxx"%optional : %int%event_larger_than@'n = 300',  # ' '
 	"yyy" : 3,
@@ -8,17 +10,17 @@
 		"z" : { 
 			%event_int_string%multiple : [ 3 ],
 			
-			"c" : [ %int%id_B ] ,
-			"d" : [ %int%id_B ] , 
+			"c韓 " : [ %int%id_A ] , # A is in global?
+			"d" : [ %int%id_A ] , 
 			/*  
 				comment
 			*/
-			"e" : [ %int%id_B , %int%id_B ]		
+			"e" : [ %int%id_A , %int%id_A ]		
 		},
 		%multiple : {
-			%style_x : [		
-				%multiple%event_int%enum_x%id
-				#%id_A, %id_B
+			%style_x : [
+				$clear_id_B, # cf) $clear_id : [ B ]
+				%multiple%event_int%enum_x%id_B
 			]
 		}
 	}

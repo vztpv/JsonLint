@@ -6,7 +6,6 @@ schema = {
 	#
 }
 
-# $encoding = UTF-8
 Event = {
 	id = __init__  # special event. // before validation.
 	
@@ -15,16 +14,16 @@ Event = {
 			# in jsonLint Defualt is utf-8?
 	
 	# LoadData
-	$load = { "b.txt" } 
+	$load = { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\b.txt" } 
 	
 	# LoadData->LoadData2
-	$load_json = { { "a.json" }  { data } }
+	$load_json = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\a.json" }  { data } }
 	#$load_json = { { "C:\Users\vztpv\source\repos\ClauJson\ClauJson\input.json" }  { data } }
 	#  - LoadData2? : 333'dddd'333 -> one token, 
 	#  - # line comment, // line comment, /* */ comment,
 	# clau test parer + clauText + claujson..
 	
-	$load_my_json_schema = { { "schema.txt" } { schema } }
+	$load_my_json_schema = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\schema.txt" } { schema } }
 	
 	$print = { { "init.." } }
 	$print = { enter = { \n } }
@@ -49,7 +48,7 @@ Style = {
 	id = x
 	
 	%multiple
-	%optional
+	%optional 
 	%event_int_string = { }
 	%event_list_sum_larger_than = { n = /./x }
 }
