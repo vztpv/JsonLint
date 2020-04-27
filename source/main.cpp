@@ -117,9 +117,11 @@ namespace Lint {
 	};
 
 
-	Option OptionFrom(const std::string& option_str)
+	Option OptionFrom(const std::string& option_str, wiz::load_data::UserType* mainUT, std::vector<std::string>& style_vec, const std::map<std::string, wiz::load_data::UserType*>& styleMap)
 	{
 		Option option;
+		Option option_temp;
+
 		std::string::size_type start = 0;
 		std::string::size_type find_percent = std::string::npos; // % : delimeter.
 
@@ -185,7 +187,31 @@ namespace Lint {
 				option.Enum(std::move(enum_name));
 			}
 			else if (wiz::String::startsWith(opt, "%style_")) {
-				option.Style(wiz::String::substring(opt, 7));
+				std::string style_id = opt.substr(7);
+				std::sort(style_vec.begin(), style_vec.end());
+
+				std::string result;
+
+				if (std::binary_search(style_vec.begin(), style_vec.end(), style_id)) {
+					throw "clauText Schema`s style is wrong.3.55";
+				}
+
+				auto styleUT = styleMap.at(style_id);
+				style_vec.push_back(style_id);
+
+				for (size_t i = 0; i < styleUT->GetItemListSize(); ++i) {
+					result += styleUT->GetItemList(i).Get().ToString();
+				}
+
+				for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
+					result += styleUT->GetUserTypeList(i)->GetName().ToString();
+					wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
+
+					result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
+					result += "\'";
+				}
+
+				option_temp = option_temp + OptionFrom(result, mainUT, style_vec, styleMap);
 			}
 			else {
 				std::cout << "wrong option" << ENTER;
@@ -197,7 +223,7 @@ namespace Lint {
 		if (option.type.empty()) {
 			option.type.push_back(Option::Type_::ANY);
 		}
-		return option;
+		return option + option_temp;
 	}
 
 	// chk valid in here!
@@ -274,13 +300,14 @@ namespace Lint {
 
 	std::tuple<bool, Option, Option> _Check(wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& enumMap,
 		const std::map<std::string, wiz::load_data::UserType*>& styleMap, std::map<std::string, std::set<std::string>>& idMap,
-		const wiz::load_data::ItemType<WIZ_STRING_TYPE>& x, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& y, const std::string& real_dir,
-		std::vector<std::string>* name_style_vec, std::vector<std::string>* val_style_vec) //, Order?
+		const wiz::load_data::ItemType<WIZ_STRING_TYPE>& x, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& y, const std::string& real_dir
+		) //, Order?
 	{
-		std::tuple<bool, Option, Option> sub_var_option, sub_val_option;
+		std::vector<std::string> name_style_vec;
+		std::vector<std::string> val_style_vec;
 
-		const Option var_option = OptionFrom(x.GetName().ToString()); // name, value check - not start with % ??
-		const Option val_option = OptionFrom(x.Get(0).ToString());
+		const Option var_option = OptionFrom(x.GetName().ToString(), mainUT, name_style_vec, styleMap); // name, value check - not start with % ??
+		const Option val_option = OptionFrom(x.Get(0).ToString(), mainUT, val_style_vec, styleMap);
 
 		// val only case, ex) A = { a b c d } , a, b, c, d `s name is empty.
 		if (x.GetName().ToString().empty()) {
@@ -297,8 +324,8 @@ namespace Lint {
 		}
 
 		// option type check.
-		const bool name_do = (val_style_vec == nullptr)? true : OptionDoA(var_option, y.GetName().ToString());
-		const bool val_do = (name_style_vec == nullptr)? true : OptionDoA(val_option, y.Get(0).ToString());
+		const bool name_do = OptionDoA(var_option, y.GetName().ToString());
+		const bool val_do = OptionDoA(val_option, y.Get(0).ToString());
 
 
 		if (name_do && val_do) {
@@ -355,7 +382,7 @@ namespace Lint {
 					" real_dir = " + real_dir +
 					" select = VALUE " +
 					" input = " + y.Get(0).ToString() + " " + argument +
-					" } } " ,
+					" } } ",
 					wiz::ExecuteData());
 
 				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", mainUT, wiz::ExecuteData(), opt, 1)) {
@@ -410,7 +437,7 @@ namespace Lint {
 				auto enumUT = enumMap.at(id);
 
 				bool found = false;
-				
+
 				enumUT->sort_item_list();
 
 				size_t start = 0, last = enumUT->GetItemListSize() - 1;
@@ -478,100 +505,23 @@ namespace Lint {
 
 				ut->second.insert(y.Get().ToString());
 			}
-
-
-
-			// style
-		//	Style = {
-	//			id = x
-//
-		//		%multiple
-		//		%optional
-		//		%event_int_string = { }
-	//			%event_list_sum_larger_than = { n = /./x }
-		//	}
-
-			if (name_style_vec) {
-				std::sort(name_style_vec->begin(), name_style_vec->end());
-
-				std::string result;
-				auto styles = *name_style_vec;
-				for (auto& id : var_option.style_ids) {
-					if (std::binary_search(styles.begin(), styles.end(), id)) {
-						throw "clauText Schema`s style is wrong.";
-					}
-
-					auto styleUT = styleMap.at(id);
-					styles.push_back(id);
-
-					for (size_t i = 0; i < styleUT->GetItemListSize(); ++i) {
-						result += styleUT->GetItemList(i).Get().ToString();
-					}
-
-					for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
-						result += styleUT->GetUserTypeList(i)->GetName().ToString();
-						wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
-
-						result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
-						result += "\'";
-					}
-				}
-				if (!result.empty() && !std::get<0>(sub_var_option = _Check(mainUT, enumMap, styleMap, idMap, wiz::load_data::ItemType<WIZ_STRING_TYPE>("", result), y, real_dir,
-					&styles, nullptr))) {
-					std::cout << "clauText is not valid2.6" << ENTER;
-					return { false, var_option, val_option };
-				}
-			}
-			if (val_style_vec) {
-				std::sort(val_style_vec->begin(), val_style_vec->end());
-
-				std::string result;
-				auto styles = *val_style_vec;
-				for (auto& id : val_option.style_ids) {
-					if (std::binary_search(styles.begin(), styles.end(), id)) {
-						throw "clauText Schema`s style is wrong.2.65";
-					}
-
-					auto styleUT = styleMap.at(id);
-					styles.push_back(id);
-
-					for (size_t i = 0; i < styleUT->GetItemListSize(); ++i) {
-						result += styleUT->GetItemList(i).Get().ToString();
-					}
-
-					for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
-						result += styleUT->GetUserTypeList(i)->GetName().ToString();
-						wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
-
-						result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
-						result += "\'";
-					}
-				}
-
-				if (!result.empty() && !std::get<0>(sub_val_option = _Check(mainUT, enumMap, styleMap, idMap, wiz::load_data::ItemType<WIZ_STRING_TYPE>("", result), y, real_dir,
-					nullptr, &styles))) {
-					std::cout << "clauText is not valid2.7" << ENTER;
-					return { false, var_option, val_option };
-				}
-			}
 		}
 		else {
 			return { false, var_option, val_option };
 		}
 
 		
-		return { true, var_option + std::get<1>(sub_var_option), val_option + std::get<1>(sub_val_option) };
+		return { true, var_option, val_option };
 	}
 
 	std::tuple<bool, Option> _Check(wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& enumMap,
 		const std::map<std::string, wiz::load_data::UserType*>& styleMap, std::map<std::string, std::set<std::string>>& idMap,
 		const wiz::load_data::UserType& x, const wiz::load_data::UserType& y, 
-		const std::string& real_dir, std::vector<std::string>* name_style_vec
+		const std::string& real_dir
 	)
 	{
-		std::tuple<bool, Option> sub_var_option;
-
-		Option var_option = OptionFrom(x.GetName().ToString()); // name, value check - not start with % ??
+		std::vector<std::string> name_style_vec;
+		Option var_option = OptionFrom(x.GetName().ToString(), mainUT, name_style_vec, styleMap); // name, value check - not start with % ??
 
 		// val only case, ex) A = { a b c d } , a, b, c, d `s name is empty.
 		if (x.GetName().ToString().empty()) {
@@ -673,45 +623,12 @@ namespace Lint {
 
 				ut->second.insert(y.GetName().ToString());
 			}
-
-			{
-				std::sort(name_style_vec->begin(), name_style_vec->end());
-
-				std::string result;
-				auto styles = *name_style_vec;
-				for (auto& id : var_option.style_ids) {
-					if (std::binary_search(styles.begin(), styles.end(), id)) {
-						throw "clauText Schema`s style is wrong.3.55";
-					}
-
-					auto styleUT = styleMap.at(id);
-					styles.push_back(id);
-
-					for (size_t i = 0; i < styleUT->GetItemListSize(); ++i) {
-						result += styleUT->GetItemList(i).Get().ToString();
-					}
-
-					for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
-						result += styleUT->GetUserTypeList(i)->GetName().ToString();
-						wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
-
-						result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
-						result += "\'";
-					}
-				}
-				
-				if (!result.empty() && !std::get<0>(sub_var_option = _Check(mainUT, enumMap, styleMap, idMap, wiz::load_data::UserType(result), y, real_dir,
-					&styles))) {
-					std::cout << "clauText is not valid3.6" << ENTER;
-					return { false, var_option + std::get<1>(sub_var_option) };
-				}
-			}
 		}
 		else {
 			return { false, var_option };
 		}
 
-		return { true, var_option + std::get<1>(sub_var_option) };
+		return { true, var_option };
 	}
 
 	class Wrap {
@@ -734,7 +651,7 @@ namespace Lint {
 		bool useIdxVec = false;
 		bool multiple = false;
 	public:
-		Wrap(const wiz::load_data::UserType* ut, std::string real_dir) 
+		Wrap(const wiz::load_data::UserType* ut, std::string real_dir, wiz::load_data::UserType* mainUT, std::map<std::string, wiz::load_data::UserType*>& styleMap) 
 			: ut(ut), real_dir(real_dir) {
 			max = ut->GetIListSize();
 			size_t it_count = 0;
@@ -742,7 +659,9 @@ namespace Lint {
 			
 			for (size_t i = 0; i < ut->GetIListSize(); ++i) {
 				if (ut->IsItemList(i)) {
-					auto x = OptionFrom(ut->GetItemList(it_count).GetName().ToString());
+					std::vector<std::string> style_vec;
+					auto x = OptionFrom(ut->GetItemList(it_count).GetName().ToString(), mainUT, style_vec, styleMap);
+
 					if (!x.prefix.empty() && objectMap.end() != objectMap.find(x.prefix)) {
 						std::cout << "duplication\n";
 					}
@@ -757,7 +676,9 @@ namespace Lint {
 					it_count++;
 				}
 				else {
-					auto x = OptionFrom(ut->GetUserTypeList(ut_count)->GetName().ToString());
+					std::vector<std::string> style_vec;
+					auto x = OptionFrom(ut->GetUserTypeList(ut_count)->GetName().ToString(), mainUT, style_vec, styleMap);
+
 					if (!x.prefix.empty() && objectMap.end() != objectMap.find(x.prefix)) {
 						std::cout << "duplication\n";
 					}
@@ -801,7 +722,9 @@ namespace Lint {
 		}
 
 		std::vector<std::pair<Wrap, Wrap>> _stack;
-		_stack.push_back({ {schemaUT,"empty_string"}, {jsonUT, "/./" + jsonUT->GetName().ToString()} });
+		_stack.push_back({ {schemaUT,"empty_string", mainUT, styleMap}, {jsonUT, "/./" + jsonUT->GetName().ToString(), mainUT, styleMap} });
+
+		std::vector<std::string> style_vec;
 
 		// loop
 		while (!_stack.empty()) {
@@ -813,10 +736,12 @@ namespace Lint {
 
 							for (size_t idx : _stack.back().first.it_empty_prefix_vec) {
 								auto x = _stack.back().first.ut;
-								auto opt = OptionFrom(x->GetItemList(idx).GetName().ToString());
+								style_vec.clear();
+								auto opt = OptionFrom(x->GetItemList(idx).GetName().ToString(), mainUT, style_vec, styleMap);
 
 								if (x->GetItemList(idx).GetName().empty()) {
-									opt = OptionFrom(x->GetItemList(idx).Get().ToString());
+									style_vec.clear();
+									opt = OptionFrom(x->GetItemList(idx).Get().ToString(), mainUT, style_vec, styleMap);
 								}
 
 								if (_stack.back().first.visitMap[&x->GetItemList(idx)] != 0 && opt.multiple != Option::Multiple_::ON) {
@@ -826,7 +751,7 @@ namespace Lint {
 								std::vector<std::string> name_style_vec, val_style_vec;
 
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, x->GetItemList(idx), _stack.back().second.ut->GetItemList(i),
-									_stack.back().second.real_dir, x->GetItemList(idx).GetName().empty() ? nullptr : &name_style_vec, &val_style_vec); std::get<0>(success)) {
+									_stack.back().second.real_dir); std::get<0>(success)) {
 									std::cout << "success\n";
 
 									pass = true;
@@ -851,7 +776,8 @@ namespace Lint {
 
 							for (size_t idx : _stack.back().first.ut_empty_prefix_vec) {
 								auto x = _stack.back().first.ut;
-								auto opt = OptionFrom(x->GetUserTypeList(idx)->GetName().ToString());
+								style_vec.clear();
+								auto opt = OptionFrom(x->GetUserTypeList(idx)->GetName().ToString(), mainUT, style_vec, styleMap);
 
 								if (_stack.back().first.visitMap[x->GetUserTypeList(idx)] != 0 && opt.multiple != Option::Multiple_::ON) {
 									continue;
@@ -863,7 +789,7 @@ namespace Lint {
 								std::cout << name << "\n";
 
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, *(x->GetUserTypeList(idx)), *(_stack.back().second.ut->GetUserTypeList(i)),
-									_stack.back().second.real_dir + "/" + name, &name_style_vec); std::get<0>(success)) {
+									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
 									std::cout << "success\n";
 
 									pass = true;
@@ -888,10 +814,12 @@ namespace Lint {
 
 					for (size_t idx : _stack.back().first.it_empty_prefix_vec) {
 						auto x = _stack.back().first.ut;
-						auto opt = OptionFrom(x->GetItemList(idx).GetName().ToString());
+						style_vec.clear();
+						auto opt = OptionFrom(x->GetItemList(idx).GetName().ToString(), mainUT, style_vec, styleMap);
 
 						if (x->GetItemList(idx).GetName().empty()) {
-							opt = OptionFrom(x->GetItemList(idx).Get().ToString());
+							style_vec.clear();
+							opt = OptionFrom(x->GetItemList(idx).Get().ToString(), mainUT, style_vec, styleMap);
 						}
 
 						if (_stack.back().first.visitMap[&x->GetItemList(idx)] == 0 && opt.required != Option::Required_::OPTIONAL_) {
@@ -902,7 +830,8 @@ namespace Lint {
 
 					for (size_t idx : _stack.back().first.ut_empty_prefix_vec) {
 						auto x = _stack.back().first.ut;
-						auto opt = OptionFrom(x->GetUserTypeList(idx)->GetName().ToString());
+						style_vec.clear();
+						auto opt = OptionFrom(x->GetUserTypeList(idx)->GetName().ToString(), mainUT, style_vec, styleMap);
 
 						if (_stack.back().first.visitMap[x->GetUserTypeList(idx)] == 0 && opt.required != Option::Required_::OPTIONAL_) {
 							std::cout << "fail\n";
@@ -925,9 +854,9 @@ namespace Lint {
 						const wiz::load_data::UserType* nestedSchemaUT = _stack.back().first.ut->GetUserTypeList(temp2);
 
 						std::string name = nestedJsonUT->GetName().ToString();
-						_stack.push_back({ { nestedSchemaUT, "empty_string"},
+						_stack.push_back({ { nestedSchemaUT, "empty_string", mainUT, styleMap },
 						{ nestedJsonUT,
-							name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name } });
+							name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name, mainUT, styleMap } });
 				}
 				else {
 					_stack.pop_back();
@@ -955,7 +884,9 @@ namespace Lint {
 					idMap[temp].clear();
 				}
 				else {
-					auto opt = OptionFrom(x->GetItemList(it_count).GetName().ToString());
+					style_vec.clear();
+
+					auto opt = OptionFrom(x->GetItemList(it_count).GetName().ToString(), mainUT, style_vec, styleMap);
 					std::string key = opt.prefix;
 					
 					if (!key.empty()) {
@@ -965,7 +896,7 @@ namespace Lint {
 
 							if (result->second->IsItemType()) {
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, x->GetItemList(it_count), *((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second)),
-									_stack.back().second.real_dir, &name_style_vec, &val_style_vec); std::get<0>(success)) {
+									_stack.back().second.real_dir); std::get<0>(success)) {
 									std::cout << "success\n";
 
 									_stack.back().second.visitMap[result->second] = 1;
@@ -1029,7 +960,8 @@ namespace Lint {
 					continue;
 				}
 				else {
-					auto opt = OptionFrom(x->GetUserTypeList(ut_count)->GetName().ToString());
+					style_vec.clear();
+					auto opt = OptionFrom(x->GetUserTypeList(ut_count)->GetName().ToString(), mainUT, style_vec, styleMap);
 					std::string key = opt.prefix;
 					
 					nestedSchemaUT = x->GetUserTypeList(ut_count);
@@ -1043,7 +975,7 @@ namespace Lint {
 								std::string name = result->second->GetName().ToString();
 
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, *(x->GetUserTypeList(ut_count)), *((wiz::load_data::UserType*)(result->second)),
-									_stack.back().second.real_dir + "/" + name, &name_style_vec); std::get<0>(success)) {
+									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
 									std::cout << "success\n";
 
 									_stack.back().second.visitMap[result->second] = 1;
@@ -1088,9 +1020,9 @@ namespace Lint {
 
 				if (!optional && nestedJsonUT && nestedSchemaUT) {
 					std::string name = nestedJsonUT->GetName().ToString();
-					_stack.push_back({ { nestedSchemaUT, "empty_string"},
+					_stack.push_back({ { nestedSchemaUT, "empty_string", mainUT, styleMap},
 					{ nestedJsonUT,
-						name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name } });
+						name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name, mainUT, styleMap } });
 				}
 			}
 		}
