@@ -7,65 +7,65 @@
 # Test File
 
     data = {
-      #
+        #
     }
     schema = {
-      #
+        #
     }
 
-    # $encoding = UTF-8
     Event = {
-      id = __init__  # special event. // before validation.
+        id = __init__  # special event. // before validation.
 
-      # for output to console, output to file.
-      $encoding_utf-8 = { } 
-          # in jsonLint Defualt is utf-8?
+        # for output to console, output to file.
+        $encoding_utf-8 = { } 
+                # in jsonLint Defualt is utf-8?
 
-      # LoadData
-      $load = { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\b.txt" } 
+        # LoadData
+        $load = { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\b.txt" } 
 
-      # LoadData->LoadData2
-      $load_json = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\a.json" }  { data } }
-      #$load_json = { { "C:\Users\vztpv\source\repos\ClauJson\ClauJson\input.json" }  { data } }
-      #  - LoadData2? : 333'dddd'333 -> one token, 
-      #  - # line comment, // line comment, /* */ comment,
-      # clau test parer + clauText + claujson..
+        # LoadData->LoadData2
+        $load_json = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\a.json" }  { data } }
+        #$load_json = { { "C:\Users\vztpv\source\repos\ClauJson\ClauJson\input.json" }  { data } }
+        #  - LoadData2? : 333'dddd'333 -> one token, 
+        #  - # line comment, // line comment, /* */ comment,
+        # clau test parer + clauText + claujson..
 
-      $load_my_json_schema = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\schema.txt" } { schema } }
+        $load_my_json_schema = { { "C:\Users\vztpv\Desktop\Clau\JsonLint\JsonLint\schema.txt" } { schema } }
 
-      $print = { { "init.." } }
-      $print = { enter = { \n } }
+        $print = { { "init.." } }
+        $print = { enter = { \n } }
 
-      # $print2 = { { /./ } }
+        # $print2 = { { /./ } }
 
-      $return = { data schema } # returns folder names?
+        $return = { data schema } # returns folder names?
     }
 
-        Event = {
-          id = __end__ # special event. // after validation
+    Event = {
+        id = __end__ # special event. // after validation
 
-          $print = { enter = { \n } }
-          $print = { data = { "end__" } }
-          $print = { enter = { \n } }
-          $_getch = { }
-        }
+        $print = { enter = { \n } }
+        $print = { data = { "end__" } }
+        $print = { enter = { \n } }
+        $_getch = { }
+    }
 
-        x = 10
+    x = 1
 
-        Style = {
-          id = x
+    Style = {
+        id = x
 
-          %multiple
-          %optional
-          %event_int_string = { }
-          %event_list_sum_larger_than = { n = /./x }
-        }
+        %multiple
+        %optional 
+        %event_int_string = { }
+        %event_list_sum_larger_than = { n = /./x }
+    }
 
-        Enum = {
-          id = x
+    Enum = {
+        id = x
 
-          1 2 3 4
-        }
+        1 2 3 4 5
+    }
+
 
     Event = { 
         id = list_sum_larger_than
@@ -182,9 +182,12 @@
     }
 
 
+
 # JsonLint Semantic Check Code Example
+
     {
-        $log : on, // comment 
+        $id : [ A, B ], 
+        $log : on, // comment  $log : off
         #"abc" : "aaaa"dddd'eee'"333",
         "xxx"%optional : %int%event_larger_than@'n = 300',  # ' '
         "yyy" : 3,
@@ -193,17 +196,17 @@
             "z" : { 
                 %event_int_string%multiple : [ 3 ],
 
-                "c" : [ %int%id_B ] ,
-                "d" : [ %int%id_B ] , 
+                "c韓 " : [ %int%id_A ] , # A is in global?
+                "d" : [ %int%id_A ] , 
                 /*  
                     comment
                 */
-                "e" : [ %int%id_B , %int%id_B ]		
+                "e" : [ %int%id_A , %int%id_A ]		
             },
             %multiple : {
-                %style_x%different_values : [		
-                    %multiple%event_int%enum_x
-                    #%id_A, %id_B
+                %style_x : [
+                    $clear_id_B, # cf) $clear_id : [ B ]
+                    %multiple%event_int%enum_x%id_B
                 ]
             }
         }
@@ -219,9 +222,9 @@
             "z": {
                 "1": [3],
                 "2": [3],
-                "c": [4] ,
                 "d": [5],
-                "e": [6, 8]
+                "e": [6, 8],
+                "c\u97D3\u0020": [4] 
 
             },
             "a,a": {
@@ -230,7 +233,7 @@
                 "566": [2 ,3]
             },
             "a,b": {
-                "66": [3 , 4, 5] 
+                "66": [3 , 5, 1] 
             }
         }
     }
