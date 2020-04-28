@@ -2,23 +2,23 @@
 {
 	$id : [ A, B ], 
 	$log : on, // comment  $log : off
-	#"abc" : "aaaa"dddd'eee'"333",
-	"xxx"%optional : %int%event_larger_than@'n = 300',  # ' '
+	#"abc" : dd'aaaa'dddd'eee'dd'333',
+	"xxx"%optional : %integer%event_larger_than@'n = 300',  # ' '
 	"yyy" : 3,
 	
 	"x" : {
 		"z" : { 
 			%event_int_string%multiple : [ 3 ],
 			
-			"c韓 " : [ %int%id_A ] , # A is in global?
-			"d" : [ %int%id_A ] , 
+			"c韓 " : [ %integer@'minimum=3 maximum=4'%id_A ] , # A is in global?
+			"d" : [ %integer%id_A ] , 
 			/*  
 				comment
 			*/
-			"e" : [ %int%id_A , %int%id_A ]		
+			"e" : [ %integer%id_A , %integer%id_A ]		
 		},
 		%multiple : {
-			%style_x : [
+			%style_x@'n = 1'%minItems@'1'%maxItems@'5' : [ # %minItems@'1', %maxItems@'3'
 				$clear_id_B, # cf) $clear_id : [ B ]
 				%multiple%event_int%enum_x%id_B
 			]

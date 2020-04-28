@@ -28,7 +28,7 @@ Event = {
 	$print = { { "init.." } }
 	$print = { enter = { \n } }
 	
-	# $print2 = { { /./ } }
+	$print2 = { { /./ } }
 	
 	$return = { data schema } # returns folder names?
 }
@@ -46,11 +46,12 @@ x = 1
 
 Style = {
 	id = x
+	$parameter = { n }
 	
 	%multiple
 	%optional 
 	%event_int_string = { }
-	%event_list_sum_larger_than = { n = /./x }
+	%event_list_sum_larger_than = { n = $parameter.n }
 }
 
 Enum = {
