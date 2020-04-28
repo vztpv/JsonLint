@@ -2094,7 +2094,8 @@ namespace wiz {
 									idx = GetIdx(tokens[qouted_start - 1]);
 									real_token_arr_count--;
 								}
-								while (i < token_count - 1 && 0 == GetType(tokens[i + 1]) && !IsToken2(tokens[i + 1])
+
+								while (i < token_count - 1 && 0 == GetType(tokens[i + 1]) 
 									&& GetIdx(tokens[i + 1]) == GetIdx(tokens[i]) + GetLength(tokens[i])) {
 									len += GetLength(tokens[i + 1]);
 									++i;
