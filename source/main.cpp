@@ -41,6 +41,11 @@ namespace Lint {
 		std::vector<std::string> style_ids;
 
 		std::string prefix;
+
+		wiz::DataType minimum, maximum;
+		bool use_minimum = false, use_maximum = false;
+		long long minItems = 0, maxItems = 0;
+		bool use_minItems = false, use_maxItems = false;
 	public:
 		Option() : type(), 
 			required(Required_::REQUIRED),
@@ -112,11 +117,30 @@ namespace Lint {
 				temp.type.push_back(x);
 			}
 
+			if (other.use_minimum) {
+				temp.use_minimum = true;
+				temp.minimum = other.minimum;
+			}
+			if (other.use_maximum) {
+				temp.use_maximum = true;
+				temp.maximum = other.maximum;
+			}
+			
+			if (other.use_minItems) {
+				temp.use_minItems = true;
+				temp.minItems = other.minItems;
+			}
+			if (other.use_maxItems) {
+				temp.use_maxItems = true;
+				temp.maxItems = other.maxItems;
+			}
+			
 			return temp;
 		}
 	};
 
 
+	// itemtype, usertype flag?
 	Option OptionFrom(const std::string& option_str, wiz::load_data::UserType* mainUT, std::vector<std::string>& style_vec, const std::map<std::string, wiz::load_data::UserType*>& styleMap)
 	{
 		Option option;
@@ -145,16 +169,73 @@ namespace Lint {
 
 			const std::string opt = option_str.substr(start, end_ - 1 - start + 1);
 
-			if ("%int"sv == opt) {
+			if (wiz::String::startsWith(opt, "%integer"sv)) {
 				option.Type(Option::Type_::INT);
+
+				std::vector<std::string> temp = wiz::tokenize(opt, '@');
+
+				if (temp.size() > 1) {
+					std::string argument = temp[1].substr(1, temp[1].size() - 2);
+					wiz::load_data::UserType ut;
+					wiz::load_data::LoadData::LoadDataFromString(argument, ut);
+
+					auto item1 = ut.GetItem("minimum");
+					if (item1.size() > 0) {
+						option.use_minimum = true;
+						option.minimum = item1[0].Get();
+					}
+					auto item2 = ut.GetItem("maximum");
+					if (item2.size() > 0) {
+						option.use_maximum = true;
+						option.maximum = item2[0].Get();
+					}
+				}
 			}
-			else if ("%float"sv == opt) {
+			else if (wiz::String::startsWith(opt, "%float"sv)) {
 				option.Type(Option::Type_::FLOAT);
+
+				std::vector<std::string> temp = wiz::tokenize(opt, '@');
+
+				if (temp.size() > 1) {
+					std::string argument = temp[1].substr(1, temp[1].size() - 2);
+					wiz::load_data::UserType ut;
+					wiz::load_data::LoadData::LoadDataFromString(argument, ut);
+
+					auto item1 = ut.GetItem("minimum");
+					if (item1.size() > 0) {
+						option.use_minimum = true;
+						option.minimum = item1[0].Get();
+					}
+					auto item2 = ut.GetItem("maximum");
+					if (item2.size() > 0) {
+						option.use_maximum = true;
+						option.maximum = item2[0].Get();
+					}
+				}
 			}
-			else if ("%number"sv == opt) {
+			else if (wiz::String::startsWith(opt, "%number"sv)) {
 				option.Type(Option::Type_::NUMBER);
+				
+				std::vector<std::string> temp = wiz::tokenize(opt, '@');
+
+				if (temp.size() > 1) {
+					std::string argument = temp[1].substr(1, temp[1].size() - 2);
+					wiz::load_data::UserType ut;
+					wiz::load_data::LoadData::LoadDataFromString(argument, ut);
+
+					auto item1 = ut.GetItem("minimum");
+					if (item1.size() > 0) {
+						option.use_minimum = true;
+						option.minimum = item1[0].Get();
+					}
+					auto item2 = ut.GetItem("maximum");
+					if (item2.size() > 0) {
+						option.use_maximum = true;
+						option.maximum = item2[0].Get();
+					}
+				}
 			}
-			else if ("%bool"sv == opt) {
+			else if ("%boolean"sv == opt) {
 				option.Type(Option::Type_::BOOLEAN);
 			}
 			else if ("%null"sv == opt) {
@@ -178,6 +259,33 @@ namespace Lint {
 			else if ("%multiple"sv == opt) {
 				option.Multiple(Option::Multiple_::ON);
 			}
+			else if (wiz::String::startsWith(opt, "%minItems"sv)) { // size check?
+				std::string argument;
+
+				{
+					std::vector<std::string> temp = wiz::tokenize(opt.substr(), '@');
+					if (temp.size() > 1) {
+						argument = temp[1].substr(1, temp[1].size() - 2);
+					}
+					wiz::DataType x(argument);
+					option.use_minItems = true;
+					option.minItems = x.ToInt();
+				}
+
+			}
+			else if (wiz::String::startsWith(opt, "%maxItems"sv)) { // size check?
+				std::string argument;
+
+				{
+					std::vector<std::string> temp = wiz::tokenize(opt.substr(), '@');
+					if (temp.size() > 1) {
+						argument = temp[1].substr(1, temp[1].size() - 2);
+					}
+					wiz::DataType x(argument);
+					option.use_maxItems = true;
+					option.maxItems = x.ToInt();
+				}
+			}
 			else if (wiz::String::startsWith(opt, "%event_")) { // size check?
 				std::string event_name = wiz::String::substring(opt, 7);
 				option.Event(std::move(event_name));
@@ -187,7 +295,27 @@ namespace Lint {
 				option.Enum(std::move(enum_name));
 			}
 			else if (wiz::String::startsWith(opt, "%style_")) {
-				std::string style_id = opt.substr(7);
+				std::string style_id;
+				std::string argument;
+				wiz::ExecuteData executeData;
+
+				{
+					std::vector<std::string> temp = wiz::tokenize(opt.substr(7), '@');
+					style_id = temp[0];
+					if (temp.size() > 1) {
+						argument = temp[1].substr(1, temp[1].size() - 2);
+					}
+
+					wiz::DataType x = wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, argument, wiz::ExecuteData()).ToString();
+					wiz::load_data::UserType ut;
+					wiz::load_data::LoadData::LoadDataFromString(x.ToString(), ut);
+
+					for (size_t i = 0; i < ut.GetItemListSize(); ++i) {
+						executeData.info.parameters.insert({ ut.GetItemList(i).GetName().ToString(), ut.GetItemList(i).Get().ToString() });
+					}
+				}
+				
+
 				std::sort(style_vec.begin(), style_vec.end());
 
 				std::string result;
@@ -204,10 +332,13 @@ namespace Lint {
 				}
 
 				for (size_t i = 0; i < styleUT->GetUserTypeListSize(); ++i) {
+					if (styleUT->GetUserTypeList(i)->GetName() == "$parameter"sv) {
+						continue;
+					}
 					result += styleUT->GetUserTypeList(i)->GetName().ToString();
 					wiz::load_data::UserType temp = *(styleUT->GetUserTypeList(i));
 
-					result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, wiz::ExecuteData()).ToString();
+					result += "@\'" + wiz::load_data::LoadData::ToBool4(nullptr, *mainUT, temp, executeData).ToString();
 					result += "\'";
 				}
 
@@ -226,8 +357,7 @@ namespace Lint {
 		return option + option_temp;
 	}
 
-	// chk valid in here!
-	inline bool OptionDoA(const Option& option, std::string_view str)
+	inline bool OptionDoA(const Option& option, std::string_view str) // json str
 	{
 		if (option.prefix.empty() == false &&
 			option.prefix == str) {
@@ -244,7 +374,26 @@ namespace Lint {
 				break;
 			case Option::Type_::INT:
 				if (wiz::load_data::Utility::IsIntegerInJson(str)) {
-					//
+					if (option.use_minimum) {
+						wiz::DataType x(str.data());
+						if (option.minimum.ToInt() <= x.ToInt()) {
+							//
+						}
+						else {
+							std::cout << str << "is small" << ENTER;
+							count--;
+						}
+					}
+					if (option.use_maximum) {
+						wiz::DataType x(str.data());
+						if (option.maximum.ToInt() >= x.ToInt()) {
+							//
+						}
+						else {
+							std::cout << str << "is big" << ENTER;
+							count--;
+						}
+					}
 				}
 				else {
 					std::cout << str << " is not integer" << ENTER;
@@ -253,7 +402,26 @@ namespace Lint {
 				break;
 			case Option::Type_::FLOAT:
 				if (wiz::load_data::Utility::IsFloatInJson(str)) {
-					//
+					if (option.use_minimum) {
+						wiz::DataType x(str.data());
+						if (option.minimum.ToFloat() <= x.ToFloat()) {
+							//
+						}
+						else {
+							std::cout << str << "is small" << ENTER;
+							count--;
+						}
+					}
+					if (option.use_maximum) {
+						wiz::DataType x(str.data());
+						if (option.maximum.ToFloat() >= x.ToFloat()) {
+							//
+						}
+						else {
+							std::cout << str << "is big" << ENTER;
+							count--;
+						}
+					}
 				}
 				else {
 					std::cout << str << " is not float" << ENTER;
@@ -263,7 +431,26 @@ namespace Lint {
 			
 			case Option::Type_::NUMBER:
 				if (wiz::load_data::Utility::IsNumberInJson(str)) {
-					//
+					if (option.use_minimum) {
+						wiz::DataType x(str.data());
+						if (option.minimum.ToFloat() <= x.ToFloat()) {
+							//
+						}
+						else {
+							std::cout << str << "is small" << ENTER;
+							count--;
+						}
+					}
+					if (option.use_maximum) {
+						wiz::DataType x(str.data());
+						if (option.maximum.ToFloat() >= x.ToFloat()) {
+							//
+						}
+						else {
+							std::cout << str << "is big" << ENTER;
+							count--;
+						}
+					}
 				}
 				else {
 					std::cout << str << "is not number(integer + float)" << ENTER;
@@ -541,6 +728,27 @@ namespace Lint {
 		const bool name_do = OptionDoA(var_option, y.GetName().ToString());
 
 		if (name_do) {
+			{
+				if (var_option.use_minItems) {
+					if (var_option.minItems <= y.GetIListSize()) {
+						//
+					}
+					else {
+						std::cout << "minItems error\n";
+						return { false, var_option };
+					}
+				}
+				if (var_option.use_maxItems) {
+					if (var_option.maxItems >= y.GetIListSize()) {
+						//
+					}
+					else {
+						std::cout << "maxItems error\n";
+						return { false, var_option };
+					}
+				}
+			}
+
 			// event check.
 			wiz::ClauText clauText;
 			std::string event_name;
@@ -651,7 +859,7 @@ namespace Lint {
 		bool useIdxVec = false;
 		bool multiple = false;
 	public:
-		Wrap(const wiz::load_data::UserType* ut, std::string real_dir, wiz::load_data::UserType* mainUT, std::map<std::string, wiz::load_data::UserType*>& styleMap) 
+		Wrap(const wiz::load_data::UserType* ut, const std::string& real_dir, wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& styleMap) 
 			: ut(ut), real_dir(real_dir) {
 			max = ut->GetIListSize();
 			size_t it_count = 0;
