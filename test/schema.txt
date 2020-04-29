@@ -15,10 +15,12 @@
 			/*  
 				comment
 			*/
-			"e" : [ %integer%id_A , %integer%id_A ]		
+			"e" : [ %integer%id_A , %integer%id_A ],
+			"f"%optional%need@"g" : 123,
+			"g"%optional : %regex@'[0-9]'
 		},
 		%multiple : {
-			%style_x@'n = 1'%minItems@'1'%maxItems@'5' : [ # %minItems@'1', %maxItems@'3'
+			%style_x@'n = 1' : [ # %minItems@'1', %maxItems@'3'
 				$clear_id_B, # cf) $clear_id : [ B ]
 				%multiple%event_int%enum_x%id_B
 			]

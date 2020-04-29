@@ -28,7 +28,7 @@ Event = {
 	$print = { { "init.." } }
 	$print = { enter = { \n } }
 	
-	$print2 = { { /./ } }
+	#$print2 = { { /./ } }
 	
 	$return = { data schema } # returns folder names?
 }
@@ -50,6 +50,8 @@ Style = {
 	
 	%multiple
 	%optional 
+	%minItems@'1'
+	%maxItems@'5'
 	%event_int_string = { }
 	%event_list_sum_larger_than = { n = $parameter.n }
 }
