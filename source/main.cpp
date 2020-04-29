@@ -298,7 +298,7 @@ namespace Lint {
 					}
 				}
 			}
-			else if (wiz::String::startsWith(opt, "%regex")) {
+			else if (wiz::String::startsWith(opt, "%regex"sv)) {
 				std::string expr;
 
 				std::vector<std::string> temp = wiz::tokenize(opt, '@');
@@ -308,7 +308,7 @@ namespace Lint {
 					option.regex = expr;
 				}
 			}
-			else if (wiz::String::startsWith(opt, "%need")) {
+			else if (wiz::String::startsWith(opt, "%need"sv)) {
 				std::string name;
 
 				std::vector<std::string> temp = wiz::tokenize(opt, '@');
@@ -793,7 +793,7 @@ namespace Lint {
 
 	std::tuple<bool, Option> _Check(wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& enumMap,
 		const std::map<std::string, wiz::load_data::UserType*>& styleMap, std::map<std::string, std::set<std::string>>& idMap,
-		std::map<std::string, std::string> needMap,
+		std::map<std::string, std::string>& needMap,
 		const wiz::load_data::UserType& x, const wiz::load_data::UserType& y, 
 		const std::string& real_dir
 	)
