@@ -46,6 +46,10 @@ namespace Lint {
 		bool use_minimum = false, use_maximum = false;
 		long long minItems = 0, maxItems = 0;
 		bool use_minItems = false, use_maxItems = false;
+
+		std::string regex; 
+
+		std::vector<std::string> needs;
 	public:
 		Option() : type(), 
 			required(Required_::REQUIRED),
@@ -134,7 +138,14 @@ namespace Lint {
 				temp.use_maxItems = true;
 				temp.maxItems = other.maxItems;
 			}
-			
+			if (!other.regex.empty()) {
+				temp.regex = other.regex;
+			}
+
+			for (size_t i = 0; i < other.needs.size(); ++i) {
+				temp.needs.push_back(other.needs[i]);
+			}
+
 			return temp;
 		}
 	};
@@ -144,7 +155,6 @@ namespace Lint {
 	Option OptionFrom(const std::string& option_str, wiz::load_data::UserType* mainUT, std::vector<std::string>& style_vec, const std::map<std::string, wiz::load_data::UserType*>& styleMap)
 	{
 		Option option;
-		Option option_temp;
 
 		std::string::size_type start = 0;
 		std::string::size_type find_percent = std::string::npos; // % : delimeter.
@@ -263,13 +273,14 @@ namespace Lint {
 				std::string argument;
 
 				{
-					std::vector<std::string> temp = wiz::tokenize(opt.substr(), '@');
+					std::vector<std::string> temp = wiz::tokenize(opt, '@');
 					if (temp.size() > 1) {
 						argument = temp[1].substr(1, temp[1].size() - 2);
+
+						wiz::DataType x(argument);
+						option.use_minItems = true;
+						option.minItems = x.ToInt();
 					}
-					wiz::DataType x(argument);
-					option.use_minItems = true;
-					option.minItems = x.ToInt();
 				}
 
 			}
@@ -277,24 +288,46 @@ namespace Lint {
 				std::string argument;
 
 				{
-					std::vector<std::string> temp = wiz::tokenize(opt.substr(), '@');
+					std::vector<std::string> temp = wiz::tokenize(opt, '@');
 					if (temp.size() > 1) {
 						argument = temp[1].substr(1, temp[1].size() - 2);
+
+						wiz::DataType x(argument);
+						option.use_maxItems = true;
+						option.maxItems = x.ToInt();
 					}
-					wiz::DataType x(argument);
-					option.use_maxItems = true;
-					option.maxItems = x.ToInt();
 				}
 			}
-			else if (wiz::String::startsWith(opt, "%event_")) { // size check?
+			else if (wiz::String::startsWith(opt, "%regex")) {
+				std::string expr;
+
+				std::vector<std::string> temp = wiz::tokenize(opt, '@');
+				if (temp.size() > 1) {
+					expr = temp[1].substr(1, temp[1].size() - 2);
+
+					option.regex = expr;
+				}
+			}
+			else if (wiz::String::startsWith(opt, "%need")) {
+				std::string name;
+
+				std::vector<std::string> temp = wiz::tokenize(opt, '@');
+
+				if (temp.size() > 1) {
+					name = temp[1].substr(1, temp[1].size() - 2);
+
+					option.needs.push_back(name);
+				}
+			}
+			else if (wiz::String::startsWith(opt, "%event_"sv)) { // size check?
 				std::string event_name = wiz::String::substring(opt, 7);
 				option.Event(std::move(event_name));
 			}
-			else if (wiz::String::startsWith(opt, "%enum_")) { // size check?
+			else if (wiz::String::startsWith(opt, "%enum_"sv)) { // size check?
 				std::string enum_name = wiz::String::substring(opt, 6);
 				option.Enum(std::move(enum_name));
 			}
-			else if (wiz::String::startsWith(opt, "%style_")) {
+			else if (wiz::String::startsWith(opt, "%style_"sv)) {
 				std::string style_id;
 				std::string argument;
 				wiz::ExecuteData executeData;
@@ -342,7 +375,7 @@ namespace Lint {
 					result += "\'";
 				}
 
-				option_temp = option_temp + OptionFrom(result, mainUT, style_vec, styleMap);
+				option = option + OptionFrom(result, mainUT, style_vec, styleMap);
 			}
 			else {
 				std::cout << "wrong option" << ENTER;
@@ -354,7 +387,7 @@ namespace Lint {
 		if (option.type.empty()) {
 			option.type.push_back(Option::Type_::ANY);
 		}
-		return option + option_temp;
+		return option;
 	}
 
 	inline bool OptionDoA(const Option& option, std::string_view str) // json str
@@ -486,8 +519,9 @@ namespace Lint {
 	}
 
 	std::tuple<bool, Option, Option> _Check(wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& enumMap,
-		const std::map<std::string, wiz::load_data::UserType*>& styleMap, std::map<std::string, std::set<std::string>>& idMap,
-		const wiz::load_data::ItemType<WIZ_STRING_TYPE>& x, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& y, const std::string& real_dir
+		const std::map<std::string, wiz::load_data::UserType*>& styleMap, std::map<std::string, std::set<std::string>>& idMap, 
+		std::map<std::string, std::string>& needMap,
+		const wiz::load_data::ItemType<WIZ_STRING_TYPE>& x, const wiz::load_data::ItemType<WIZ_STRING_TYPE>& y, const wiz::load_data::UserType* y_parent, const std::string& real_dir
 		) //, Order?
 	{
 		std::vector<std::string> name_style_vec;
@@ -692,6 +726,62 @@ namespace Lint {
 
 				ut->second.insert(y.Get().ToString());
 			}
+
+			if (!var_option.regex.empty()) {
+				const std::regex base_regex(var_option.regex);
+				std::smatch base_match;
+				std::string name = y.GetName().ToString();
+
+				if (std::regex_match(name, base_match, base_regex)) {
+					//
+				}
+				else {
+					std::cout << "regex fail\n";
+					return { false, var_option, val_option };
+				}
+			}
+			if (!val_option.regex.empty()) {
+				const std::regex base_regex(val_option.regex);
+				std::smatch base_match;
+				std::string value = y.Get().ToString();
+
+				if (std::regex_match(value, base_match, base_regex)) {
+					//
+				}
+				else {
+					std::cout << "regex fail\n";
+					return { false, var_option, val_option };
+				}
+			}
+
+			for (size_t i = 0; i < var_option.needs.size(); ++i) {
+				std::string old = y.GetName().ToString();
+				old = old.substr(1, old.size() - 2);
+
+				if (auto _x = needMap.find(var_option.needs[i]); _x != needMap.end()) {
+					while (_x != needMap.end()) {
+						if (_x->second == old) {
+							std::cout << "need error\n";
+							return { false, var_option, val_option };
+						}
+						_x = needMap.find(_x->second);
+					}
+				}
+				
+				needMap.insert({ old, var_option.needs[i] });
+
+
+				if (y_parent != nullptr) {
+					if ((!y_parent->GetItem("\"" + var_option.needs[i] + "\"").empty()) ||
+						(!y_parent->GetUserTypeItem("\"" + var_option.needs[i] + "\"").empty())) {
+						//
+					}
+					else {
+						std::cout << "need " << ("\"" + var_option.needs[i] + "\"") << "\n";
+						return { false, var_option, val_option };
+					}
+				}
+			}
 		}
 		else {
 			return { false, var_option, val_option };
@@ -703,6 +793,7 @@ namespace Lint {
 
 	std::tuple<bool, Option> _Check(wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& enumMap,
 		const std::map<std::string, wiz::load_data::UserType*>& styleMap, std::map<std::string, std::set<std::string>>& idMap,
+		std::map<std::string, std::string> needMap,
 		const wiz::load_data::UserType& x, const wiz::load_data::UserType& y, 
 		const std::string& real_dir
 	)
@@ -831,6 +922,49 @@ namespace Lint {
 
 				ut->second.insert(y.GetName().ToString());
 			}
+
+			if (!var_option.regex.empty()) {
+				const std::regex base_regex(var_option.regex);
+				std::smatch base_match;
+				std::string name = y.GetName().ToString();
+
+				if (std::regex_match(name, base_match, base_regex)) {
+					//
+				}
+				else {
+					std::cout << "regex fail\n";
+					return { false, var_option };
+				}
+			}
+			
+			for (size_t i = 0; i < var_option.needs.size(); ++i) {
+				needMap.insert({ y.GetName().ToString(), var_option.needs[i] });
+				std::string old = y.GetName().ToString();
+				old = old.substr(1, old.size() - 2);
+
+				if (auto _x = needMap.find(var_option.needs[i]); _x != needMap.end()) {
+					while (_x != needMap.end()) {
+						if (_x->second == old) {
+							std::cout << "need error\n";
+							return { false, var_option };
+						}
+						_x = needMap.find(_x->second);
+					}
+				}
+
+				needMap.insert({ old, var_option.needs[i] });
+
+				if (y.GetParent() != nullptr) {
+					if ((!y.GetParent()->GetItem("\"" + var_option.needs[i] + "\"").empty()) ||
+						(!y.GetParent()->GetUserTypeItem("\"" + var_option.needs[i] + "\"").empty())) {
+						//
+					}
+					else {
+						std::cout << "need " <<("\"" + var_option.needs[i] + "\"") << "\n";
+						return { false, var_option };
+					}
+				}
+			}
 		}
 		else {
 			return { false, var_option };
@@ -910,7 +1044,7 @@ namespace Lint {
 		// init
 		std::map<std::string, wiz::load_data::UserType*> styleMap;
 		std::map<std::string, wiz::load_data::UserType*> enumMap;
-
+		std::map<std::string, std::string> needMap;
 		std::map<std::string, std::set<std::string>> idMap;
 
 		{
@@ -958,7 +1092,8 @@ namespace Lint {
 
 								std::vector<std::string> name_style_vec, val_style_vec;
 
-								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, x->GetItemList(idx), _stack.back().second.ut->GetItemList(i),
+								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, x->GetItemList(idx), _stack.back().second.ut->GetItemList(i),
+									_stack.back().second.ut,
 									_stack.back().second.real_dir); std::get<0>(success)) {
 									std::cout << "success\n";
 
@@ -996,7 +1131,7 @@ namespace Lint {
 								std::string name = _stack.back().second.ut->GetUserTypeList(i)->GetName().ToString();
 								std::cout << name << "\n";
 
-								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, *(x->GetUserTypeList(idx)), *(_stack.back().second.ut->GetUserTypeList(i)),
+								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, *(x->GetUserTypeList(idx)), *(_stack.back().second.ut->GetUserTypeList(i)),
 									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
 									std::cout << "success\n";
 
@@ -1103,7 +1238,8 @@ namespace Lint {
 							std::vector<std::string> name_style_vec, val_style_vec;
 
 							if (result->second->IsItemType()) {
-								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, x->GetItemList(it_count), *((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second)),
+								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, x->GetItemList(it_count), *((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second)),
+									_stack.back().second.ut,
 									_stack.back().second.real_dir); std::get<0>(success)) {
 									std::cout << "success\n";
 
@@ -1182,7 +1318,7 @@ namespace Lint {
 							if (result->second->IsUserType()) {
 								std::string name = result->second->GetName().ToString();
 
-								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, *(x->GetUserTypeList(ut_count)), *((wiz::load_data::UserType*)(result->second)),
+								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, *(x->GetUserTypeList(ut_count)), *((wiz::load_data::UserType*)(result->second)),
 									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
 									std::cout << "success\n";
 
