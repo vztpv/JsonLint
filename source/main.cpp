@@ -530,20 +530,6 @@ namespace Lint {
 		const Option var_option = OptionFrom(x.GetName().ToString(), mainUT, name_style_vec, styleMap); // name, value check - not start with % ??
 		const Option val_option = OptionFrom(x.Get(0).ToString(), mainUT, val_style_vec, styleMap);
 
-		// val only case, ex) A = { a b c d } , a, b, c, d `s name is empty.
-		if (x.GetName().ToString().empty()) {
-			if (!y.GetName().ToString().empty()) {
-				//
-				return{ false, var_option, val_option };
-			}
-		}
-		else { // bug?
-			if (y.GetName().ToString().empty()) {
-				//
-				return{ false, var_option, val_option };
-			}
-		}
-
 		// option type check.
 		const bool name_do = OptionDoA(var_option, y.GetName().ToString());
 		const bool val_do = OptionDoA(val_option, y.Get(0).ToString());
@@ -800,20 +786,6 @@ namespace Lint {
 	{
 		std::vector<std::string> name_style_vec;
 		Option var_option = OptionFrom(x.GetName().ToString(), mainUT, name_style_vec, styleMap); // name, value check - not start with % ??
-
-		// val only case, ex) A = { a b c d } , a, b, c, d `s name is empty.
-		if (x.GetName().ToString().empty()) {
-			if (!y.GetName().ToString().empty()) {
-				//
-				return{ false, var_option };
-			}
-		}
-		else { // bug?
-			if (y.GetName().ToString().empty()) {
-				//
-				return{ false, var_option };
-			}
-		}
 
 		// option type check.
 		const bool name_do = OptionDoA(var_option, y.GetName().ToString());
@@ -1122,14 +1094,17 @@ namespace Lint {
 								style_vec.clear();
 								auto opt = OptionFrom(x->GetUserTypeList(idx)->GetName().ToString(), mainUT, style_vec, styleMap);
 
+								std::string name = _stack.back().second.ut->GetUserTypeList(i)->GetName().ToString();
+								std::cout << name << "\n";
+
 								if (_stack.back().first.visitMap[x->GetUserTypeList(idx)] != 0 && opt.multiple != Option::Multiple_::ON) {
 									continue;
 								}
 
 								std::vector<std::string> name_style_vec;
-
-								std::string name = _stack.back().second.ut->GetUserTypeList(i)->GetName().ToString();
-								std::cout << name << "\n";
+								if (name.empty()) {
+									name = "_";
+								}
 
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, *(x->GetUserTypeList(idx)), *(_stack.back().second.ut->GetUserTypeList(i)),
 									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
@@ -1241,6 +1216,8 @@ namespace Lint {
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, x->GetItemList(it_count), *((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second)),
 									_stack.back().second.ut,
 									_stack.back().second.real_dir); std::get<0>(success)) {
+									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName().lineInfo.line << " ";
+									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName() << " ";
 									std::cout << "success\n";
 
 									_stack.back().second.visitMap[result->second] = 1;
@@ -1317,7 +1294,9 @@ namespace Lint {
 
 							if (result->second->IsUserType()) {
 								std::string name = result->second->GetName().ToString();
-
+								if (name.empty()) {
+									name = "_";
+								}
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, *(x->GetUserTypeList(ut_count)), *((wiz::load_data::UserType*)(result->second)),
 									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
 									std::cout << "success\n";
@@ -1377,7 +1356,7 @@ namespace Lint {
 
 	inline bool _Validate(const wiz::load_data::UserType& _mainUT)
 	{
-		wiz::load_data::UserType* clautextUT;
+		wiz::load_data::UserType* jsonUT;
 		wiz::load_data::UserType mainUT = _mainUT;
 		wiz::load_data::UserType* schemaUT;
 
@@ -1402,13 +1381,13 @@ namespace Lint {
 			}
 		}
 
-		clautextUT = wiz::load_data::UserType::Find(&mainUT, start_name).second[0];
+		jsonUT = wiz::load_data::UserType::Find(&mainUT, start_name).second[0];
 		schemaUT = wiz::load_data::UserType::Find(&mainUT, schema_name).second[0];
 
 
 		// for log?
 		bool log_on = false;
-		const bool chk = Check(&mainUT, schemaUT, clautextUT, 0, log_on);
+		const bool chk = Check(&mainUT, schemaUT, jsonUT, 0, log_on);
 
 		{
 			wiz::ClauText clauText;

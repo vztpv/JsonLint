@@ -43,6 +43,31 @@ namespace wiz {
 		return -1;
 	}
 
+
+
+	LineInfo GetLineInfo(long long x, long long* lines, long long lines_len, long long& start) {
+		if (!lines || 0 == x) {
+			return LineInfo();
+		}
+		long long idx = GetIdx(x);
+		LineInfo result;
+
+		long long i = start;
+		for (; i < lines_len; ++i) {
+			if (lines[i] >= idx) {
+				break;
+			}
+		}
+
+		result.line = i + 1;
+		result.distance = lines[i] - idx;
+		start = i;
+
+		return result;
+	}
+
+
+
 	int DataType::GetType()const {
 		if (change) {
 			if (wiz::load_data::Utility::IsInteger(str_value)) {
@@ -123,6 +148,37 @@ namespace wiz {
 		this->change = true; // false;
 	}
 
+	DataType::DataType(const char* cstr, size_t len, const LineInfo& opt)
+	{
+		if (len <= 0) {
+			std::cout << "chk\n";
+		}
+		this->str_value = std::string(cstr, len);
+
+		if (USE_REMOVE_IN_DATATYPE) {
+			this->str_value = Remove(str_value);
+		}
+
+		this->lineInfo = opt;
+		/* // #ifdef DataTypeDebug?
+		this->change = true;
+
+		if (wiz::load_data::Utility::IsInteger(this->str_value)) {
+			this->type = 3;
+			this->int_value = ToInt();
+		}
+		else if (wiz::load_data::Utility::IsDouble(this->str_value)) {
+			this->type = 5;
+			this->float_value = ToFloat();
+		}
+		else {
+			this->type = 1;
+		}
+		*/
+
+		this->change = true; // false;
+	}
+
 	DataType::DataType(const char* cstr)
 	{
 		this->str_value = std::string(cstr);
@@ -156,6 +212,33 @@ namespace wiz {
 			this->str_value = Remove(str_value);
 		}
 
+		/*
+		this->change = true;
+
+		if (wiz::load_data::Utility::IsInteger(this->str_value)) {
+			this->type = 3;
+			this->int_value = ToInt();
+		}
+		else if (wiz::load_data::Utility::IsDouble(this->str_value)) {
+			this->type = 5;
+			this->float_value = ToFloat();
+		}
+		else {
+			this->type = 1;
+		}
+		*/
+		this->change = true; // false;
+	}	
+	
+	DataType::DataType(const std::string& str, const LineInfo& opt)
+	{
+		this->str_value = str;
+
+		if (USE_REMOVE_IN_DATATYPE) {
+			this->str_value = Remove(str_value);
+		}
+
+		this->lineInfo = opt;
 		/*
 		this->change = true;
 
