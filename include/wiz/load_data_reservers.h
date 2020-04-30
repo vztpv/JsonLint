@@ -711,10 +711,10 @@ namespace wiz {
 				return (x & 1);
 			}
 			static void _Scanning(char* text, long long num, const long long length,
-				long long*& token_arr, long long& _token_arr_size, const LoadDataOption2& option) {
+				long long* token_arr, long long& _token_arr_size, long long* lines, long long& lines_len, const LoadDataOption2& option) {
 
 				long long token_arr_size = 0;
-
+				long long line = 0;
 				{
 					int state = 0;
 
@@ -754,6 +754,8 @@ namespace wiz {
 						}
 						break;
 						case '\n':
+							lines[line] = i;
+							line++;
 						case '\0':
 						case ' ':
 						case '\t':
@@ -842,11 +844,13 @@ namespace wiz {
 
 				{
 					_token_arr_size = token_arr_size;
+
+					lines_len = line;
 				}
 			}
 
 			static void ScanningNew(char* text, const size_t length, const int thr_num,
-				long long*& _token_arr, long long& _token_arr_size, const LoadDataOption2& option, bool load_schema)
+				long long*& _token_arr, long long& _token_arr_size, const LoadDataOption2& option, long long*& _lines, long long& _lines_len, bool load_schema)
 			{
 				std::vector<std::thread> thr(thr_num);
 				std::vector<long long> start(thr_num);
@@ -885,16 +889,36 @@ namespace wiz {
 				long long real_token_arr_count = 0;
 
 				long long* tokens = new long long[length + 1];
+				long long* lines = (long long*)calloc(length + 1, sizeof(long long));
+
 				long long token_count = 0;
 
 				std::vector<long long> token_arr_size(thr_num);
+				std::vector<long long> lines_len(thr_num);
+				long long lines_len_sum = 0;
 
 				for (int i = 0; i < thr_num; ++i) {
-					thr[i] = std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]), std::cref(option));
+					thr[i] = std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], tokens, std::ref(token_arr_size[i]), 
+						(lines + start[i]), std::ref(lines_len[i]), std::cref(option));
 				}
 
 				for (int i = 0; i < thr_num; ++i) {
 					thr[i].join();
+				}
+
+				{
+					long long _count = lines_len[0];
+					long long len_max = lines[lines_len[0] - 1];
+					lines_len_sum = lines_len[0];
+
+					for (int i = 1; i < thr_num; ++i) {
+						lines_len_sum += lines_len[i];
+						for (long long j = 0; j < lines_len[i]; ++j) {
+							lines[_count] = start[i] + lines[start[i] + j];
+							_count++;
+						}
+						len_max = lines[lines_len_sum - 1];
+					}
 				}
 
 				{
@@ -1217,6 +1241,8 @@ namespace wiz {
 				{
 					_token_arr = tokens;
 					_token_arr_size = real_token_arr_count;
+					_lines = lines;
+					_lines_len = lines_len_sum;
 				}
 			}
 
@@ -1591,7 +1617,7 @@ namespace wiz {
 
 
 			static std::pair<bool, int> Scan(std::ifstream& inFile, const int num, const wiz::load_data::LoadDataOption2& option, int thr_num,
-				char*& _buffer, long long* _buffer_len, long long*& _token_arr, long long* _token_arr_len, bool load_schema)
+				char*& _buffer, long long* _buffer_len, long long*& _token_arr, long long* _token_arr_len, long long*& lines, long long& lines_len, bool load_schema)
 			{
 				if (inFile.eof()) {
 					return { false, 0 };
@@ -1630,7 +1656,7 @@ namespace wiz {
 							Scanning(buffer, file_length, token_arr, token_arr_size, option, load_schema);
 						}
 						else {
-							ScanningNew(buffer, file_length, thr_num, token_arr, token_arr_size, option, load_schema);
+							ScanningNew(buffer, file_length, thr_num, token_arr, token_arr_size, option, lines, lines_len, load_schema);
 						}
 
 						//int b = clock();
@@ -1657,9 +1683,9 @@ namespace wiz {
 			}
 			bool end()const { return pInFile->eof(); } //
 		public:
-			bool operator() (const wiz::load_data::LoadDataOption2& option, int thr_num, char*& buffer, long long* buffer_len, long long*& token_arr, long long* token_arr_len, bool load_schema)
+			bool operator() (const wiz::load_data::LoadDataOption2& option, int thr_num, char*& buffer, long long* buffer_len, long long*& token_arr, long long* token_arr_len, long long*& lines, long long& lines_len, bool load_schema)
 			{
-				bool x = Scan(*pInFile, Num, option, thr_num, buffer, buffer_len, token_arr, token_arr_len, load_schema).second > 0;
+				bool x = Scan(*pInFile, Num, option, thr_num, buffer, buffer_len, token_arr, token_arr_len, lines, lines_len, load_schema).second > 0;
 
 				//	std::cout << *token_arr_len << "\n";
 				return x;
@@ -2232,138 +2258,10 @@ namespace wiz {
 					//PrintToken(text, tokens[i]);
 
 					if (pass) {
-						if (_stack.empty()) {
-							std::cout << line << " " << "Syntax Error in pre-parsing1\n";
+						if (ch == ',' && len == 1) {
+							continue;
 						}
-
-						if (expect_comma) {
-							if (len == 1 && ch == ',') {
-								expect_comma = false;
-								comma_on = true;
-								continue;
-							}
-							else {
-								if (type == 2) {
-									//
-								}
-								else {
-									std::cout << line << " " << "Syntax Error in pre-parsing2\n";
-								}
-							}
-						}
-						else {
-							if (len == 1 && ch == ',') {
-								std::cout << line << " " << "Syntax Error in pre-parsing3.5\n";
-							}
-						}
-
-
-						expect_comma = false;
-
-
-						// pre-parsing? - checking syntax errors. for comma.
-						if (0 == parse_state) {
-							if (1 == type) { // LEFT
-								_stack.push(ch);
-							}
-							else if (2 == type) { // RIGHT
-								if (comma_on) {
-									std::cout << "Syntax Error in pre-parsing3.75\n";
-								}
-
-								if (_stack.top() == option.Left && ch == option.Right) {
-									_stack.pop();
-								}
-								else if (_stack.top() == option.Left2 && ch == option.Right2) {
-									_stack.pop();
-								}
-								else {
-									std::cout << "Syntax Error in pre-parsing4\n";
-								}
-
-								expect_comma = true;
-							}
-							else if (3 == type) { // ASSIGN
-								if (comma_on) {
-									std::cout << "Syntax Error in pre-parsing4.5\n";
-								}
-
-								if (_stack.top() == option.Left2) { // array
-									std::cout << "Syntax Error in pre-parsing5\n";
-								}
-								if (!var) {
-									std::cout << "Syntax Error in pre-parsing6\n";
-								}
-								parse_state = 1;
-							}
-							else {
-								if (1 == len && ch == ',') {
-									std::cout << "Syntax Error in pre-parsing7\n";
-								}
-
-								if (var) {
-									std::cout << line << " " << "Syntax Eror in pre-parsing7.5\n";
-								}
-
-								if (_stack.top() == option.Left) {
-									var = true;
-									val = false;
-								}
-								else { // _stack.top() == option.Left2
-									var = false;
-									val = true;
-								}
-
-								if (var) {
-									//if (text[idx] == '\"' &&
-								//		text[idx + len - 1] == '\"' && len >= 2) {
-										//
-								//	}
-								//	else {
-								//		std::cout << "Syntax Error in pre-parsing8\n";
-									//}
-								}
-								else if (val) {
-									expect_comma = true;
-									val = false;
-								}
-							}
-						}
-						else if (1 == parse_state) {
-							if (comma_on) {
-								std::cout << "Syntax Error in pre-parsing8.5\n";
-							}
-
-							if (1 == type) { // LEFT
-								_stack.push(ch);
-								var = false;
-								val = false;
-								expect_comma = false;
-							}
-							else if (0 == type) {
-								if (len == 1 && ch == ',') {
-									std::cout << "Syntax Error in pre-parsing9\n";
-								}
-								else {
-									var = false;
-									val = true;
-
-									if (val) {
-										expect_comma = true;
-										val = false;
-									}
-								}
-							}
-							else {
-								// error
-								std::cout << "Syntax Error in pre-parsing10\n";
-							}
-
-							parse_state = 0;
-						}
-
-						comma_on = false;
-
+						
 						tokens[real_token_arr_count] = tokens[i];
 						real_token_arr_count++;
 					}

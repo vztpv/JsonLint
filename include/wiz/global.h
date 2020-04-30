@@ -89,16 +89,6 @@ namespace wiz {
 	inline bool USE_EMPTY_VECTOR_IN_LOAD_DATA_TYPES = false;
 
 
-	inline long long GetIdx(long long x)  noexcept {
-		return (x >> 32) & 0x00000000FFFFFFFF;
-	}
-	inline long long GetLength(long long x)  noexcept {
-		return (x & 0x00000000FFFFFFFC) >> 2;
-	}
-	inline long long GetType(long long x) noexcept {
-		return x & 3; // % 4
-	}
-
 
 	// 0~n-2 : sorted, 
 	// 0~n-1 : not sorted(maybe?)
@@ -126,6 +116,47 @@ namespace wiz {
 		vec[idx] = std::move(last);
 	}
 
+	inline long long GetIdx(long long x) {
+		return (x >> 33) & 0x000000007FFFFFFF;
+	}
+	inline long long GetLength(long long x) {
+		return (x & 0x00000001FFFFFFF0) >> 4;
+	}
+	inline long long GetType(long long x) { //to enum or enum class?
+		return (x & 0xE) >> 1;
+	}
+
+	class LineInfo {
+	public:
+		explicit LineInfo() { }
+		explicit LineInfo(long long line, long long distance)
+			:line(line), distance(distance)
+		{
+			//
+		}
+		~LineInfo() {
+			//
+		}
+	public:
+		long long line = -1;
+		long long distance = -2;
+
+	public:
+		LineInfo& operator=(const LineInfo& other) {
+			if (other.line == -1) {
+				//
+			}
+			else {
+				line = other.line;
+				distance = other.distance;
+			}
+			return *this;
+		}
+	};
+
+
+	LineInfo GetLineInfo(long long idx, long long* lines, long long lines_len, long long& start);
+
 	class DataType {
 	public:
 		int before_pos = -1;
@@ -136,10 +167,16 @@ namespace wiz {
 		mutable int type = 0;
 		mutable bool change = false;
 	public:
+		LineInfo lineInfo;
+	public:
 		DataType() { int_value = 0; float_value = 0; }
 		DataType(const char* cstr);
 		DataType(const char* cstr, size_t len);
 		DataType(const std::string& str);
+
+		DataType(const char* cstr, size_t len, const LineInfo& lineOpt);
+		DataType(const std::string& str, const LineInfo& lineOpt);
+
 		DataType(std::string&& str);
 		virtual ~DataType() {
 			//

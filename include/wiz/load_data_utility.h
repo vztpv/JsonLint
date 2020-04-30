@@ -862,7 +862,7 @@ namespace wiz {
 						return Compare(str2.substr(1), str1.substr(1), "INTEGER", "INTEGER");
 					}
 				}
-				else if ("DOUBLE" == type1)
+				else if ("FLOAT" == type1)
 				{
 					size_t x_pos = str1.find('.');
 					size_t y_pos = str2.find('.');

@@ -359,6 +359,12 @@ namespace wiz {
 				useSortedItemList2 = false;
 			}
 
+			void AddItem(const char* str1, size_t len1, const LineInfo& info1, const char* str2, size_t len2, const LineInfo& info2) {
+				itemList.emplace_back(WIZ_STRING_TYPE(std::string(str1, len1), info1), WIZ_STRING_TYPE(std::string(str2, len2), info2));
+				ilist.push_back(1);
+
+				useSortedItemList2 = false;
+			}
 			void AddItemType(const ItemType<WIZ_STRING_TYPE>& strTa)
 			{
 				for (int i = 0; i < strTa.size(); ++i) {
@@ -418,6 +424,9 @@ namespace wiz {
 			}
 		public:
 			explicit UserType(const char* str, size_t len) : Type(WIZ_STRING_TYPE(str, len)), parent(nullptr) {
+				//
+			}
+			explicit UserType(const char* str, size_t len, const LineInfo& info) : Type(WIZ_STRING_TYPE(str, len, info)), parent(nullptr) {
 				//
 			}
 			explicit UserType(WIZ_STRING_TYPE&& name, bool noRemove = false) : Type(std::move(name)), parent(nullptr) { }

@@ -330,24 +330,14 @@ namespace wiz {
 				}
 			}
 		private:
-			static long long GetIdx(long long x) {
-				return (x >> 33) & 0x000000007FFFFFFF;
-			}
-			static long long GetLength(long long x) {
-				return (x & 0x00000001FFFFFFF0) >> 4;
-			}
-			static long long GetType(long long x) { //to enum or enum class?
-				return (x & 0xE) >> 1;
-			}
-		
-		private:
 			static bool __LoadData(const char* buffer, const long long* token_arr, long long token_arr_len, UserType* _global, const wiz::load_data::LoadDataOption2* _option,
-				int start_state, int last_state, UserType** next, int* err)
+				int start_state, int last_state, UserType** next, long long* lines, long long lines_len, int* err)
 			{
 
 				std::vector<long long> varVec;
 				std::vector<long long> valVec;
 
+				long long start = 0;
 
 				if (token_arr_len <= 0) {
 					return false;
@@ -391,8 +381,11 @@ namespace wiz {
 								nestedUT[braceNum]->ReserveItemList(nestedUT[braceNum]->GetItemListSize() + varVec.size());
 
 								for (size_t x = 0; x < varVec.size(); ++x) {
-									nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]),
-										buffer + GetIdx(valVec[x]), GetLength(valVec[x]));
+									auto info1 = GetLineInfo((varVec[x]), lines, lines_len, start);
+									auto info2 = GetLineInfo((valVec[x]), lines, lines_len, start);
+
+									nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]), info1,
+										buffer + GetIdx(valVec[x]), GetLength(valVec[x]), info2);
 									{
 										std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).GetName().ToString();
 										temp = wiz::load_data::Utility::Convert(std::move(temp));
@@ -441,8 +434,11 @@ namespace wiz {
 									nestedUT[braceNum]->ReserveItemList(nestedUT[braceNum]->GetItemListSize() + varVec.size());
 
 									for (size_t x = 0; x < varVec.size(); ++x) {
-										nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]),
-											buffer + GetIdx(valVec[x]), GetLength(valVec[x]));
+										auto info1 = GetLineInfo(varVec[x], lines, lines_len, start);
+										auto info2 = GetLineInfo(valVec[x], lines, lines_len, start);
+
+										nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]), info1,
+											buffer + GetIdx(valVec[x]), GetLength(valVec[x]), info2);
 										{
 											std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).GetName().ToString();
 											temp = wiz::load_data::Utility::Convert(std::move(temp));
@@ -555,8 +551,11 @@ namespace wiz {
 							nestedUT[braceNum]->ReserveItemList(nestedUT[braceNum]->GetItemListSize() + varVec.size());
 
 							for (size_t x = 0; x < varVec.size(); ++x) {
-								nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]),
-									buffer + GetIdx(valVec[x]), GetLength(valVec[x]));
+								auto info1 = GetLineInfo((varVec[x]), lines, lines_len, start);
+								auto info2 = GetLineInfo((valVec[x]), lines, lines_len, start);
+
+								nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]), info1,
+									buffer + GetIdx(valVec[x]), GetLength(valVec[x]), info2);
 
 								{
 									std::string temp = nestedUT[braceNum]->GetItemList(nestedUT[braceNum]->GetItemListSize() - 1).GetName().ToString();
@@ -578,7 +577,8 @@ namespace wiz {
 
 							///
 							{
-								nestedUT[braceNum]->AddUserTypeItem(UserType(buffer + GetIdx(var), GetLength(var)));
+								auto info1 = GetLineInfo((var), lines, lines_len, start);
+								nestedUT[braceNum]->AddUserTypeItem(UserType(buffer + GetIdx(var), GetLength(var), info1));
 
 								{
 									{
@@ -634,8 +634,11 @@ namespace wiz {
 					nestedUT[braceNum]->ReserveItemList(nestedUT[braceNum]->GetItemListSize() + varVec.size());
 
 					for (size_t x = 0; x < varVec.size(); ++x) {
-						nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]),
-							buffer + GetIdx(valVec[x]), GetLength(valVec[x]));
+						auto info1 = GetLineInfo(varVec[x], lines, lines_len, start);
+						auto info2 = GetLineInfo(valVec[x], lines, lines_len, start);
+
+						nestedUT[braceNum]->AddItem(buffer + GetIdx(varVec[x]), GetLength(varVec[x]), info1,
+							buffer + GetIdx(valVec[x]), GetLength(valVec[x]), info2);
 					}
 
 
@@ -698,11 +701,12 @@ namespace wiz {
 				long long* token_arr = nullptr;
 				long long buffer_total_len;
 				long long token_arr_len = 0;
-
+				long long lines_len = 0;
+				long long* lines = nullptr;
 				{
 					int a = clock();
 
-					bool success = reserver(option, lex_thr_num, buffer, &buffer_total_len, token_arr, &token_arr_len, load_schema);
+					bool success = reserver(option, lex_thr_num, buffer, &buffer_total_len, token_arr, &token_arr_len, lines, lines_len, load_schema);
 
 
 					int b = clock();
@@ -726,6 +730,9 @@ namespace wiz {
 						}
 						if (token_arr) {
 							delete[] token_arr;
+						}
+						if (lines) {
+							free(lines);
 						}
 						return true;
 					}
@@ -773,13 +780,15 @@ namespace wiz {
 							long long idx = pivots.empty() ? num - 1 : pivots[0];
 							long long _token_arr_len = idx - 0 + 1;
 
-							thr[0] = std::thread(__LoadData, buffer, token_arr, _token_arr_len, &__global[0], &option, 0, 0, &next[0], &err[0]);
+							thr[0] = std::thread(__LoadData, buffer, token_arr, _token_arr_len, &__global[0], &option, 0, 0, &next[0], lines,
+								lines_len, &err[0]);
 						}
 
 						for (size_t i = 1; i < pivots.size(); ++i) {
 							long long _token_arr_len = pivots[i] - (pivots[i - 1] + 1) + 1;
 
-							thr[i] = std::thread(__LoadData, buffer, token_arr + pivots[i - 1] + 1, _token_arr_len, &__global[i], &option, 0, 0, &next[i], &err[i]);
+							thr[i] = std::thread(__LoadData, buffer, token_arr + pivots[i - 1] + 1, _token_arr_len, &__global[i], &option, 0, 0, &next[i],
+								lines, lines_len, &err[i]);
 
 						}
 
@@ -787,7 +796,7 @@ namespace wiz {
 							long long _token_arr_len = num - 1 - (pivots.back() + 1) + 1;
 
 							thr[pivots.size()] = std::thread(__LoadData, buffer, token_arr + pivots.back() + 1, _token_arr_len, &__global[pivots.size()],
-								&option, 0, 0, &next[pivots.size()], &err[pivots.size()]);
+								&option, 0, 0, &next[pivots.size()], lines, lines_len, &err[pivots.size()]);
 						}
 
 						// wait
@@ -849,6 +858,7 @@ namespace wiz {
 						catch (...) {
 							delete[] buffer;
 							delete[] token_arr;
+							free(lines);
 							buffer = nullptr;
 							throw "in Merge, error";
 						}
@@ -859,6 +869,7 @@ namespace wiz {
 
 				delete[] buffer;
 				delete[] token_arr;
+				free(lines);
 
 				if (!(_global.GetIListSize() == 1)) {
 					return false;
@@ -943,6 +954,9 @@ namespace wiz {
 					std::vector<UserType*> next(pivots.size() + 1, nullptr);
 
 					{
+						long long* lines = nullptr;
+						long long lines_len = 0;
+
 						std::vector<UserType> __global(pivots.size() + 1);
 
 						std::vector<std::thread> thr(pivots.size() + 1);
@@ -951,13 +965,15 @@ namespace wiz {
 							long long idx = pivots.empty() ? num - 1 : pivots[0];
 							long long _token_arr_len = idx - 0 + 1;
 
-							thr[0] = std::thread(__LoadData, buffer, token_arr, _token_arr_len, &__global[0], &option, 0, 0, &next[0], &err[0]);
+							thr[0] = std::thread(__LoadData, buffer, token_arr, _token_arr_len, &__global[0], &option, 0, 0, &next[0],
+								lines, lines_len, &err[0]);
 						}
 
 						for (size_t i = 1; i < pivots.size(); ++i) {
 							long long _token_arr_len = pivots[i] - (pivots[i - 1] + 1) + 1;
 
-							thr[i] = std::thread(__LoadData, buffer, token_arr + pivots[i - 1] + 1, _token_arr_len, &__global[i], &option, 0, 0, &next[i], &err[i]);
+							thr[i] = std::thread(__LoadData, buffer, token_arr + pivots[i - 1] + 1, _token_arr_len, &__global[i], &option, 0, 0, &next[i],
+								lines, lines_len, &err[i]);
 
 						}
 
@@ -965,7 +981,7 @@ namespace wiz {
 							long long _token_arr_len = num - 1 - (pivots.back() + 1) + 1;
 
 							thr[pivots.size()] = std::thread(__LoadData, buffer, token_arr + pivots.back() + 1, _token_arr_len, &__global[pivots.size()],
-								&option, 0, 0, &next[pivots.size()], &err[pivots.size()]);
+								&option, 0, 0, &next[pivots.size()], lines, lines_len, &err[pivots.size()]);
 						}
 
 						// wait
