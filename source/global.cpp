@@ -60,7 +60,7 @@ namespace wiz {
 		}
 
 		result.line = i + 1;
-		result.distance = lines[i] - idx;
+		result.distance = i > 0 ? idx - lines[i - 1] : idx;
 		start = i;
 
 		return result;

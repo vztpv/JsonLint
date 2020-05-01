@@ -1217,7 +1217,10 @@ namespace Lint {
 									_stack.back().second.ut,
 									_stack.back().second.real_dir); std::get<0>(success)) {
 									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName().lineInfo.line << " ";
-									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName() << " ";
+									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName().lineInfo.distance << " ";
+									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName() << " \t";
+									std::cout << x->GetItemList(it_count).GetName().lineInfo.line << " ";
+									std::cout << x->GetItemList(it_count).GetName() << " ";
 									std::cout << "success\n";
 
 									_stack.back().second.visitMap[result->second] = 1;
