@@ -887,11 +887,13 @@ namespace wiz {
 				long long* token_arr = nullptr;
 				long long buffer_total_len;
 				long long token_arr_len = 0;
+				long long* lines = nullptr;
+				long long lines_len = 0;
 
 				{
 					int a = clock();
 
-					bool success = reserver(option, lex_thr_num, buffer, &buffer_total_len, token_arr, &token_arr_len);
+					bool success = reserver(option, lex_thr_num, buffer, &buffer_total_len, token_arr, &token_arr_len, lines, lines_len);
 
 
 					int b = clock();
@@ -915,6 +917,9 @@ namespace wiz {
 						}
 						if (token_arr) {
 							delete[] token_arr;
+						}
+						if (lines) {
+							free(lines);
 						}
 						return true;
 					}
@@ -954,9 +959,6 @@ namespace wiz {
 					std::vector<UserType*> next(pivots.size() + 1, nullptr);
 
 					{
-						long long* lines = nullptr;
-						long long lines_len = 0;
-
 						std::vector<UserType> __global(pivots.size() + 1);
 
 						std::vector<std::thread> thr(pivots.size() + 1);
@@ -1043,6 +1045,7 @@ namespace wiz {
 						catch (...) {
 							delete[] buffer;
 							delete[] token_arr;
+							free(lines);
 							buffer = nullptr;
 							throw "in Merge, error";
 						}
@@ -1053,6 +1056,7 @@ namespace wiz {
 
 				delete[] buffer;
 				delete[] token_arr;
+				free(lines);
 
 				if (!(_global.GetIListSize() == 1)) {
 					return false;

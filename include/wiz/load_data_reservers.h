@@ -1248,11 +1248,12 @@ namespace wiz {
 
 
 			static void Scanning(char* text, const size_t length,
-				long long*& _token_arr, long long& _token_arr_size, const LoadDataOption2& option, bool load_schema) {
+				long long*& _token_arr, long long& _token_arr_size, long long*& _lines, long long& _lines_len, const LoadDataOption2& option, bool load_schema) {
 
 				long long* token_arr = new long long[length + 1];
 				long long token_arr_size = 0;
-
+				long long* lines = (long long*)calloc(length + 1, sizeof(long long));
+				long long line = 0;
 				{
 					int state = 0; int back_slush_count = 0; // \" \n -> 1, \uabcd -> 5
 
@@ -1269,6 +1270,10 @@ namespace wiz {
 								state = 1;
 							}
 							else if (isWhitespace(ch) || '\0' == ch) {
+								if ('\n' == ch) {
+									lines[line] = i;
+									line++;
+								}
 								token_last = i - 1;
 								if (token_last - token_first + 1 > 0) {
 									token_arr[token_arr_count] = Get(token_first, token_last - token_first + 1, text[token_first], option);
@@ -1611,6 +1616,8 @@ namespace wiz {
 				{
 					_token_arr = token_arr;
 					_token_arr_size = token_arr_size;
+					_lines = lines;
+					_lines_len = line;
 				}
 			}
 
@@ -1653,7 +1660,7 @@ namespace wiz {
 						long long token_arr_size;
 
 						if (thr_num == 1) {
-							Scanning(buffer, file_length, token_arr, token_arr_size, option, load_schema);
+							Scanning(buffer, file_length, token_arr, token_arr_size, lines, lines_len, option, load_schema);
 						}
 						else {
 							ScanningNew(buffer, file_length, thr_num, token_arr, token_arr_size, option, lines, lines_len, load_schema);
@@ -1743,11 +1750,11 @@ namespace wiz {
 			}
 
 			static void _Scanning(char* text, long long num, const long long length,
-				long long*& token_arr, long long& _token_arr_size, const wiz::load_data::LoadDataOption2& option, const bool isFirst, const bool isLast) {
+				long long*& token_arr, long long& _token_arr_size, long long* lines, long long& lines_len, const wiz::load_data::LoadDataOption2& option, const bool isFirst, const bool isLast) {
 
 
 				long long token_arr_size = 0;
-
+				long long line = 0;
 				{
 					int state = 0;
 
@@ -1858,6 +1865,9 @@ namespace wiz {
 							}
 						}
 						else if ('\n' == ch) {
+							lines[line] = i;
+							line++;
+
 							token_last = i - 1;
 							if (token_last - token_first + 1 > 0) {
 								token_arr[num + token_arr_count] = Get(token_first + num, token_last - token_first + 1, text[token_first], option);
@@ -1985,11 +1995,12 @@ namespace wiz {
 
 				{
 					_token_arr_size = token_arr_size;
+					lines_len = line;
 				}
 			}
 
 			static void ScanningNew(char* text, const long long length, const int thr_num,
-				long long*& _token_arr, long long& _token_arr_size, const wiz::load_data::LoadDataOption2& option)
+				long long*& _token_arr, long long& _token_arr_size, long long*& _lines, long long& _lines_len, const wiz::load_data::LoadDataOption2& option)
 			{
 				std::vector<std::thread> thr(thr_num);
 				std::vector<long long> start(thr_num);
@@ -2027,19 +2038,36 @@ namespace wiz {
 				long long token_count = 0;
 
 				std::vector<long long> token_arr_size(thr_num);
-
+				long long* lines = (long long*)calloc(length + 1, sizeof(long long));
+				std::vector<long long> lines_len(thr_num);
+				long long lines_len_sum = 0;
 
 				if (thr_num == 1) {
-					_Scanning(text, start[0], last[0] - start[0], tokens, token_arr_size[0], option, true, true);
+					_Scanning(text, start[0], last[0] - start[0], tokens, token_arr_size[0], lines, lines_len[0], option, true, true);
 				}
 				else {
 					for (int i = 0; i < thr_num; ++i) {
 						thr[i] = std::thread(_Scanning, text + start[i], start[i], last[i] - start[i], std::ref(tokens), std::ref(token_arr_size[i]),
-							std::cref(option), i == 0, thr_num - 1 == i);
+							lines + start[i], std::ref(lines_len[i]), std::cref(option), i == 0, thr_num - 1 == i);
 					}
 
 					for (int i = 0; i < thr_num; ++i) {
 						thr[i].join();
+					}
+				}
+
+				{
+					long long _count = lines_len[0];
+					long long len_max = lines[lines_len[0] - 1];
+					lines_len_sum = lines_len[0];
+
+					for (int i = 1; i < thr_num; ++i) {
+						lines_len_sum += lines_len[i];
+						for (long long j = 0; j < lines_len[i]; ++j) {
+							lines[_count] = start[i] + lines[start[i] + j];
+							_count++;
+						}
+						len_max = lines[lines_len_sum - 1];
 					}
 				}
 
@@ -2285,11 +2313,13 @@ namespace wiz {
 				{
 					_token_arr = tokens;
 					_token_arr_size = real_token_arr_count;
+					_lines = lines;
+					_lines_len = lines_len_sum;
 				}
 			}
 
 			static std::pair<bool, int> Scan(std::ifstream& inFile, const int num, const wiz::load_data::LoadDataOption2& option, int thr_num,
-				char*& _buffer, long long* _buffer_len, long long*& _token_arr, long long* _token_arr_len)
+				char*& _buffer, long long* _buffer_len, long long*& _token_arr, long long* _token_arr_len, long long*& lines, long long& lines_len)
 			{
 				if (inFile.eof()) {
 					return { false, 0 };
@@ -2326,10 +2356,10 @@ namespace wiz {
 						long long token_arr_size;
 
 						if (thr_num == 1) {
-							ScanningNew(buffer, file_length, 1, token_arr, token_arr_size, option);
+							ScanningNew(buffer, file_length, 1, token_arr, token_arr_size, lines, lines_len, option);
 						}
 						else {
-							ScanningNew(buffer, file_length, thr_num, token_arr, token_arr_size, option);
+							ScanningNew(buffer, file_length, thr_num, token_arr, token_arr_size, lines, lines_len, option);
 						}
 
 						//int b = clock();
@@ -2357,9 +2387,9 @@ namespace wiz {
 			bool end()const { return pInFile->eof(); } //
 		public:
 			bool operator() (const wiz::load_data::LoadDataOption2& option, int thr_num, char*& buffer, long long* buffer_len, 
-				long long*& token_arr, long long* token_arr_len)
+				long long*& token_arr, long long* token_arr_len, long long*& lines, long long& lines_len)
 			{
-				bool x = Scan(*pInFile, Num, option, thr_num, buffer, buffer_len, token_arr, token_arr_len).second > 0;
+				bool x = Scan(*pInFile, Num, option, thr_num, buffer, buffer_len, token_arr, token_arr_len, lines, lines_len).second > 0;
 				return x;
 			}
 		};
