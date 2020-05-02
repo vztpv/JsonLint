@@ -1724,7 +1724,7 @@ namespace wiz {
 				}
 
 
-				if (token_arr_len < 1000) {
+				if (token_arr_len < 100) {
 					int err;
 					UserType _global;
 					UserType* next = nullptr;

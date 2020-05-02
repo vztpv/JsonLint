@@ -22,7 +22,7 @@ namespace wiz {
 			}
 			return str;
 		}
-		static int find(std::string str, std::string dilim, const int start_index)
+		static int find(std::string_view str, std::string_view dilim, const int start_index)
 		{
 			if (str.empty() || dilim.empty()) { return -1; }
 
