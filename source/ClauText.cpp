@@ -183,11 +183,11 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 		}
 
 		if (nullptr == excuteData.pEvents) {
-			_events = global.GetCopyUserTypeItem("Event");
+			_events = global.GetUserTypeItem("Event");
 			for (int i = 0; i < _events.size(); ++i) {
 				events.LinkUserType(_events[i]);
 			}
-			global.RemoveUserTypeList("Event");
+			global.RemoveUserTypeList("Event", false);
 			eventPtr = &events;
 		}
 		else {
@@ -2299,10 +2299,11 @@ std::string ClauText::excute_module(const std::string& MainStr, wiz::load_data::
 	*/
 
 	if (1 == chk && !events.empty()) {
-		auto _events = events.GetCopyUserTypeItem("Event");
+		auto _events = events.GetUserTypeItem("Event");
 		for (int i = 0; i < _events.size(); ++i) {
 			_global->LinkUserType(_events[i]);
 		}
+		events.RemoveUserTypeList("Event", false);
 	}
 	return module_value;
 }

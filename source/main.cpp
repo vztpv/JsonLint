@@ -552,14 +552,28 @@ namespace Lint {
 				}
 
 				// for var // chk no start with __, no end with __ ?
+				
+				std::string func = "Event = { id = __";
+
+				func += event_name;
+				func += "__ $call = { id = ";
+				func += event_name;
+				func += " name = ";
+				func += y.GetName().ToString();
+				func += " value = ";
+				func += y.Get(0).ToString();
+				func += " is_usertype = FALSE ";
+				func += " real_dir = ";
+				func += real_dir;
+				func += " select = NAME ";
+				func += " input = ";
+				func += y.GetName().ToString();
+				func += " ";
+				func += argument;
+				func +=	" } } ";
+
 				wiz::load_data::LoadData::AddData(*mainUT, "/./",
-					"Event = { id = __" + event_name + "__ $call = { id = " + event_name +
-					" name = " + y.GetName().ToString() + " value = " + y.Get(0).ToString() +
-					" is_usertype = FALSE " +
-					" real_dir = " + real_dir +
-					" select = NAME " +
-					" input = " + y.GetName().ToString() + " " + argument +
-					" } } ",
+					func,
 					wiz::ExecuteData());
 
 				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", mainUT, wiz::ExecuteData(), opt, 1)) {
@@ -582,14 +596,28 @@ namespace Lint {
 				}
 
 				// for val
+
+				std::string func = "Event = { id = __";
+
+				func += event_name;
+				func += "__ $call = { id = ";
+				func += event_name;
+				func += " name = ";
+				func += y.GetName().ToString();
+				func += " value = ";
+				func += y.Get(0).ToString();
+				func += " is_usertype = FALSE ";
+				func += " real_dir = ";
+				func += real_dir;
+				func += " select = VALUE ";
+				func += " input = ";
+				func += y.Get().ToString();
+				func += " ";
+				func += argument;
+				func += " } } ";
+
 				wiz::load_data::LoadData::AddData(*mainUT, "/./",
-					"Event = { id = __" + event_name + "__ $call = { id = " + event_name +
-					" name = " + y.GetName().ToString() + " value = " + y.Get(0).ToString() +
-					" is_usertype = FALSE " +
-					" real_dir = " + real_dir +
-					" select = VALUE " +
-					" input = " + y.Get(0).ToString() + " " + argument +
-					" } } ",
+					func,
 					wiz::ExecuteData());
 
 				if ("TRUE"sv == clauText.excute_module("Main = { $call = { id = __" + event_name + "__ } }", mainUT, wiz::ExecuteData(), opt, 1)) {
@@ -704,7 +732,7 @@ namespace Lint {
 				}
 
 				auto ut2 = ut->second.find(y.Get().ToString());
-				std::cout << y.Get().ToString() << "\n";
+				//std::cout << y.Get().ToString() << "\n";
 				if (ut2 != ut->second.end()) {
 					std::cout << "id is already exist fail\n";
 					return { false, var_option, val_option };
@@ -954,7 +982,7 @@ namespace Lint {
 		size_t count = 0; // second
 		size_t max = 0; // idx_max
 		std::map<std::string, const wiz::load_data::Type*> objectMap; // 
-		std::vector<const wiz::load_data::Type*> objectMap2; // 
+
 		std::string real_dir;
 
 		std::vector<size_t> it_empty_prefix_vec; // first
@@ -965,16 +993,52 @@ namespace Lint {
 		bool useIdxVec = false;
 		bool multiple = false;
 	public:
-		Wrap(const wiz::load_data::UserType* ut, const std::string& real_dir, wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& styleMap) 
+		Wrap(const wiz::load_data::UserType* ut, const std::string& real_dir, wiz::load_data::UserType* mainUT, const std::map<std::string, wiz::load_data::UserType*>& styleMap,
+			long long depth, std::map<std::pair<long long, std::string>, Option>* schemaOptionMap = nullptr, 
+						std::map<std::pair<long long, std::string>, const wiz::load_data::Type*>* schemaObjectMap = nullptr)	
+
 			: ut(ut), real_dir(real_dir) {
+
 			max = ut->GetIListSize();
 			size_t it_count = 0;
 			size_t ut_count = 0;
-			
+
+			bool to_insert = false;
+
+			if (schemaOptionMap) {
+				for (size_t i = 0; i < ut->GetIListSize(); ++i) {
+					if (ut->IsItemList(i)) {
+						std::vector<std::string> style_vec;
+						Option x;
+						if (schemaOptionMap->find({ depth, ut->GetItemList(it_count).GetName().ToString() }) == schemaOptionMap->end()) {
+							to_insert = true;
+							break;
+						}
+					}
+					else {
+						std::vector<std::string> style_vec;
+						Option x;
+						if (schemaOptionMap->find({ depth, ut->GetUserTypeList(ut_count)->GetName().ToString() }) == schemaOptionMap->end()) {
+							to_insert = true;
+							break;
+						}
+					}
+				}
+			}
+
 			for (size_t i = 0; i < ut->GetIListSize(); ++i) {
 				if (ut->IsItemList(i)) {
 					std::vector<std::string> style_vec;
-					auto x = OptionFrom(ut->GetItemList(it_count).GetName().ToString(), mainUT, style_vec, styleMap);
+					Option x; 
+					if (schemaOptionMap) {
+						if (to_insert) {
+							(*schemaOptionMap)[{depth, ut->GetItemList(it_count).GetName().ToString()}] = OptionFrom(ut->GetItemList(it_count).GetName().ToString(), mainUT, style_vec, styleMap);
+						}
+						x = schemaOptionMap->at({ depth, ut->GetItemList(it_count).GetName().ToString() });
+					}
+					else {
+						x = OptionFrom(ut->GetItemList(it_count).GetName().ToString(), mainUT, style_vec, styleMap);
+					}
 
 					if (!x.prefix.empty() && objectMap.end() != objectMap.find(x.prefix)) {
 						std::cout << "duplication\n";
@@ -982,26 +1046,29 @@ namespace Lint {
 					if (!x.prefix.empty()) {
 						objectMap.insert(std::make_pair(x.prefix, &ut->GetItemList(it_count)));
 					}
-					else {
-						objectMap2.push_back(&ut->GetItemList(it_count));
-					}
 					visitMap.insert({ &ut->GetItemList(it_count), 0 });
 
 					it_count++;
 				}
 				else {
 					std::vector<std::string> style_vec;
-					auto x = OptionFrom(ut->GetUserTypeList(ut_count)->GetName().ToString(), mainUT, style_vec, styleMap);
-
+					Option x;
+					if (schemaOptionMap) {
+						if (to_insert) {
+							(*schemaOptionMap)[{depth, ut->GetUserTypeList(ut_count)->GetName().ToString()}] = OptionFrom(ut->GetUserTypeList(ut_count)->GetName().ToString(), mainUT, style_vec, styleMap);
+						}
+						x = schemaOptionMap->at({ depth, ut->GetUserTypeList(ut_count)->GetName().ToString() });
+					}
+					else {
+						x = OptionFrom(ut->GetUserTypeList(ut_count)->GetName().ToString(), mainUT, style_vec, styleMap);
+					}
 					if (!x.prefix.empty() && objectMap.end() != objectMap.find(x.prefix)) {
 						std::cout << "duplication\n";
 					}
 					if (!x.prefix.empty()) {
 						objectMap.insert(std::make_pair(x.prefix, ut->GetUserTypeList(ut_count)));
 					}
-					else {
-						objectMap2.push_back(ut->GetUserTypeList(ut_count));
-					}
+
 					visitMap.insert({ ut->GetUserTypeList(ut_count), 0 });
 
 					ut_count++;
@@ -1018,6 +1085,7 @@ namespace Lint {
 		std::map<std::string, wiz::load_data::UserType*> enumMap;
 		std::map<std::string, std::string> needMap;
 		std::map<std::string, std::set<std::string>> idMap;
+		std::map<std::pair<long long, std::string>, Option> schemaOptionMap;
 
 		{
 			auto temp = mainUT->GetUserTypeItem("Style");
@@ -1036,7 +1104,7 @@ namespace Lint {
 		}
 
 		std::vector<std::pair<Wrap, Wrap>> _stack;
-		_stack.push_back({ {schemaUT,"empty_string", mainUT, styleMap}, {jsonUT, "/./" + jsonUT->GetName().ToString(), mainUT, styleMap} });
+		_stack.push_back({ {schemaUT, "empty_string", mainUT, styleMap, 0}, {jsonUT, "/./" + jsonUT->GetName().ToString(), mainUT, styleMap, 0, &schemaOptionMap}});
 
 		std::vector<std::string> style_vec;
 
@@ -1067,7 +1135,7 @@ namespace Lint {
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, x->GetItemList(idx), _stack.back().second.ut->GetItemList(i),
 									_stack.back().second.ut,
 									_stack.back().second.real_dir); std::get<0>(success)) {
-									std::cout << "success\n";
+									// std::cout << "success\n";
 
 									pass = true;
 
@@ -1095,7 +1163,7 @@ namespace Lint {
 								auto opt = OptionFrom(x->GetUserTypeList(idx)->GetName().ToString(), mainUT, style_vec, styleMap);
 
 								std::string name = _stack.back().second.ut->GetUserTypeList(i)->GetName().ToString();
-								std::cout << name << "\n";
+							//	std::cout << name << "\n";
 
 								if (_stack.back().first.visitMap[x->GetUserTypeList(idx)] != 0 && opt.multiple != Option::Multiple_::ON) {
 									continue;
@@ -1108,7 +1176,7 @@ namespace Lint {
 
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, *(x->GetUserTypeList(idx)), *(_stack.back().second.ut->GetUserTypeList(i)),
 									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
-									std::cout << "success\n";
+									// std::cout << "success\n";
 
 									pass = true;
 
@@ -1172,9 +1240,9 @@ namespace Lint {
 						const wiz::load_data::UserType* nestedSchemaUT = _stack.back().first.ut->GetUserTypeList(temp2);
 
 						std::string name = nestedJsonUT->GetName().ToString();
-						_stack.push_back({ { nestedSchemaUT, "empty_string", mainUT, styleMap },
+						_stack.push_back({ { nestedSchemaUT, "empty_string", mainUT, styleMap, (long long)_stack.size() },
 						{ nestedJsonUT,
-							name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name, mainUT, styleMap } });
+							name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name, mainUT, styleMap, (long long)_stack.size(), &schemaOptionMap } });
 				}
 				else {
 					_stack.pop_back();
@@ -1216,12 +1284,7 @@ namespace Lint {
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, x->GetItemList(it_count), *((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second)),
 									_stack.back().second.ut,
 									_stack.back().second.real_dir); std::get<0>(success)) {
-									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName().lineInfo.line << " ";
-									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName().lineInfo.distance << " ";
-									std::cout << ((wiz::load_data::ItemType<WIZ_STRING_TYPE>*)(result->second))->GetName() << " \t";
-									std::cout << x->GetItemList(it_count).GetName().lineInfo.line << " ";
-									std::cout << x->GetItemList(it_count).GetName() << " ";
-									std::cout << "success\n";
+									// std::cout << "success\n";
 
 									_stack.back().second.visitMap[result->second] = 1;
 
@@ -1302,7 +1365,7 @@ namespace Lint {
 								}
 								if (auto success = _Check(mainUT, enumMap, styleMap, idMap, needMap, *(x->GetUserTypeList(ut_count)), *((wiz::load_data::UserType*)(result->second)),
 									_stack.back().second.real_dir + "/" + name); std::get<0>(success)) {
-									std::cout << "success\n";
+									// std::cout << "success\n";
 
 									_stack.back().second.visitMap[result->second] = 1;
 									
@@ -1346,9 +1409,9 @@ namespace Lint {
 
 				if (!optional && nestedJsonUT && nestedSchemaUT) {
 					std::string name = nestedJsonUT->GetName().ToString();
-					_stack.push_back({ { nestedSchemaUT, "empty_string", mainUT, styleMap},
+					_stack.push_back({ { nestedSchemaUT, "empty_string", mainUT, styleMap, (long long)_stack.size()},
 					{ nestedJsonUT,
-						name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name, mainUT, styleMap } });
+						name.empty() ? _stack.back().second.real_dir + "/_" : _stack.back().second.real_dir + "/" + name, mainUT, styleMap, (long long)_stack.size(), &schemaOptionMap } });
 				}
 			}
 		}
@@ -1476,7 +1539,10 @@ int main(int argc, char* argv[])
 		}
 
 		if (option == "-V") {
+			int a = clock();
 			auto chk = Lint::Validate(fileUT);
+			int b = clock();
+			std::cout << b - a << "ms\n";
 			if (chk) {
 				std::cout << ENTER << "success" << ENTER;
 			}
